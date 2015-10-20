@@ -16,6 +16,6 @@ int main(void) {
   col = e_group_config.core_col;
   core_id = e_get_coreid();
   num = row * e_group_config.group_cols + col;
-  result  = (volatile unsigned *) (0x8f000000); // writing to external memory, writing 4bytes
-  *result = (unsigned)&test;
+  result  = (volatile unsigned *) (0x8f000000 + 0x4*num); // writing to external memory, writing 4bytes
+  *result = num;
 }

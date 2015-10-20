@@ -55,7 +55,7 @@ int main(int argc, char * argv[]) {
   e_read(&emem, 0, 0, 0x0, &result, ncores * sizeof(int)); // reads what's ben put in buffer
 
   for(i = 0; i < ncores; i++)
-    printf("The result is 0x%04x\n", result[i]);
+    printf("Result from core n°%02i is 0x%04x\n",i, result[i]);
 
   return 0;
 }
