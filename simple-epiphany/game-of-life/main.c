@@ -7,7 +7,7 @@
 
 #define BUFOFFSET (0x01000000)  // SDRAM is at 0x8f00'0000,
                                 // offset in e_read starts at 0x8e00'0000
-#define GAME_ITERATIONS 10000
+#define GAME_ITERATIONS 10
 
 unsigned rows, cols, i, j, ncores, row, col;
 
