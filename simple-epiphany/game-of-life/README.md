@@ -1,28 +1,31 @@
-Each core saves it's id in it's local memory. Then it writes a ready status, waits for it's neighbor to be ready, then read it's
-neighbor id. Finally writes the result in shared memory. The host then prints the result.
+Each core acts as an autonomous cell in Conway's game of life. The program doesn't show every changes since each core are autonomous. It simply repeatedly prints the state a fixed number of time.
 
 to run :
 ```
 ./build.sh && ./main.elf
 ```
 
-expected outcome :
+The expected outcome may differ every time! Here is an example :
 
 ```
-The result is 0x0001
-The result is 0x0002
-The result is 0x0003
-The result is 0x0004
-The result is 0x0005
-The result is 0x0006
-The result is 0x0007
-The result is 0x0008
-The result is 0x0009
-The result is 0x000a
-The result is 0x000b
-The result is 0x000c
-The result is 0x000d
-The result is 0x000e
-The result is 0x000f
-The result is 0x0000
+X	X	X	X	X	X
+X	O	X	X	O	X	
+X	O	O	O	O	X	
+X	O	O	O	X	X	
+X	O	X	O	O	X	
+X	X	X	X	X	X
+
+X	X	X	X	X	X
+X	O	X	X	O	X	
+X	X	O	O	O	X	
+X	O	O	O	X	X	
+X	O	X	O	O	X	
+X	X	X	X	X	X
+
+X	X	X	X	X	X
+X	O	O	O	O	X	
+X	O	O	X	O	X	
+X	X	O	X	O	X	
+X	O	O	O	O	X	
+X	X	X	X	X	X
 ```
