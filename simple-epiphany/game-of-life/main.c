@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include <e-hal.h>  // Epiphany Hardware Abstraction Layer
                     // functionality for communicating with epiphany chip when
@@ -7,7 +8,7 @@
 
 #define BUFOFFSET (0x01000000)  // SDRAM is at 0x8f00'0000,
                                 // offset in e_read starts at 0x8e00'0000
-#define GAME_ITERATIONS 10
+#define GAME_ITERATIONS 100
 
 unsigned rows, cols, i, j, ncores, row, col;
 
@@ -53,7 +54,9 @@ int main(int argc, char * argv[]) {
   // offset starts from 0x8e00'0000
   // sdram (shared space) is at 0x8f00'0000
   // so 0x8e00'0000 + 0x0100'0000 = 0x8f00'0000
-  e_alloc(&emem, BUFOFFSET, 4*ncores);
+  e_alloc(&emem, BUFOFFSET, ncores*sizeof(char) +
+                            ncores*sizeof(uint32_t) +
+                            ncores*sizeof(uint32_t)); // *2 'cause we store result and number of iterations
 
   init_workgroup(&dev);
   // we read from the allocated space and store it to the result array
@@ -72,6 +75,13 @@ int main(int argc, char * argv[]) {
     fprintf(stdout, "X\tX\tX\tX\tX\tX\n");
     fprintf(stdout, "\n");
     fflush(stdout);
+  }
+  // read iterations
+  uint32_t iterations[ncores*2];
+  // offset of ncores
+  e_read(&emem, 0, 0, ncores, &iterations, ncores * sizeof(uint32_t) + ncores * sizeof(uint32_t));
+  for(i = 0; i < ncores; i++) {
+    fprintf(stdout, "eCore %02i, iteration %i, iof %i\n", i, iterations[i],iterations[ncores+i]);
   }
   e_close(&dev);
   return 0;

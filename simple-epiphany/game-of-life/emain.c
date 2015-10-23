@@ -14,6 +14,8 @@
  */
 char swap[8] SECTION(".text_bank2");
 volatile char *result;
+volatile uint32_t *status;
+volatile uint32_t *state;
 
 int main(void) {
 
@@ -21,6 +23,8 @@ int main(void) {
            group_rows, group_cols,
            core_num;
   char neighbor_status;
+  uint32_t iterations = 2147483000;
+  uint32_t iof = 0; // Integer Overflow Flag
 
   core_row = e_group_config.core_row;
   core_col = e_group_config.core_col;
@@ -29,13 +33,23 @@ int main(void) {
 
   core_num = core_row * group_cols + core_col;
 
+  // our swap, could (should) put it in a structure
   swap[1] = DEAD;
   swap[0] = READY;
 
+  // starts at the beginning of sdram
   result  = (volatile char *) (0x8f000000 + 0x1*core_num); // writing to external memory, writing 4bytes
+  // we add offset of 0x10 = 16 = ncores * sizeof(char)
+  status = (volatile uint32_t*) (0x8f000010 + 0x4*core_num);
+  // we add offset of 0x50 = 16 + 16 * sizeof(uint32_t)
+  state = (volatile uint32_t*) (0x8f000050 + 0x4*core_num);
 
   unsigned alive_neighbor;
   while(1) {
+    iterations++; // increment number of iteration
+    unsigned tmp_iof = e_reg_read(E_REG_STATUS);
+    tmp_iof = tmp_iof & (4096); // use the sticky overflow integer flag
+    iof = iof | tmp_iof;
     alive_neighbor = 0;
     // top left
     if(core_row == 0 && core_col == 0) {
@@ -131,6 +145,8 @@ int main(void) {
     if(alive_neighbor == 3) swap[1] = ALIVE;
     else if(alive_neighbor < 2) swap[1] = DEAD;
     else if(alive_neighbor > 3) swap[1] = DEAD;
-    *result = swap[1];
+    *result = swap[1]; // store result
+    *status = iterations; // store number of iterations so far
+    *state = iof;
   }
 }
