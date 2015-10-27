@@ -1,4 +1,5 @@
-Each core acts as an autonomous cell in Conway's game of life. The program doesn't show every changes since each core are autonomous. It simply repeatedly prints the state a fixed number of time.
+Each core acts as an autonomous cell in Conway's game of life. The program doesn't show every changes since each core are autonomous. It simply repeatedly prints the state a fixed number of time.  
+Borders are considered as permanently living cells.
 
 to run :
 ```
