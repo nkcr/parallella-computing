@@ -23,8 +23,8 @@ int main(void) {
            group_rows, group_cols,
            core_num;
   char neighbor_status;
-  uint32_t iterations = 2147483000;
-  uint32_t iof = 0; // Integer Overflow Flag
+  uint32_t iterations = 0;
+  uint32_t iof = 0; // Sticky Integer Overflow Flag
 
   core_row = e_group_config.core_row;
   core_col = e_group_config.core_col;
