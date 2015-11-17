@@ -43,22 +43,20 @@ int main(void) {
     e_read(&e_group_config,&neighbor_status,neighbor_row,neighbor_col,(char*)0x4001,1);
   } while(neighbor_status != READY);
 
-  /* Test purpose
+  char * neighbor_status_pointer = e_get_global_address(neighbor_row, neighbor_col, swap);
   e_ctimer_set(E_CTIMER_0, E_CTIMER_MAX);
   e_ctimer_start(E_CTIMER_0, E_CTIMER_CLK);
   unsigned time_e = e_ctimer_get(E_CTIMER_0);
-  for(i=0; i < 5000; i++) { */
+  for(i=0; i < 10000; i++) {
     // Reading my neighbor status
-    e_read(&e_group_config,&neighbor_status,neighbor_row,neighbor_col,(char*)0x4000,1);
-  /* Test purpose
+    neighbor_status = *neighbor_status_pointer;
   }
   unsigned time_s = e_ctimer_get(E_CTIMER_0);
   e_ctimer_stop(E_CTIMER_0);
-  unsigned clocks = time_e - time_s; */
+  unsigned clocks = time_e - time_s;
 
   // Printing the result
   result  = (volatile unsigned *) (0x8f000000 + 0x4*core_num); // writing to external memory, writing 4bytes
-  *result = neighbor_status;
-  /* Test purpose
-  *result = clocks; */
+
+  *result = clocks;
 }

@@ -60,9 +60,8 @@ int main(int argc, char * argv[]) {
   e_read(&emem, 0, 0, 0x0, &result, ncores * sizeof(int)); // reads what's ben put in buffer
   e_close(&dev);
   for(i = 0; i < ncores; i++)
-    printf("The result is 0x%04x\n", result[i]);
-    /* Test purpose
-    fprintf(stdout, "Number of clocks from core n°%02i is %010i\n",i, result[i]); */
+    //fprintf(stdout, "Result from core n°%02i is 0x%04x\n",i, result[i]);
+    fprintf(stdout, "Number of clocks from core n°%02i is %010i\n",i, result[i]);
 
   return 0;
 }
