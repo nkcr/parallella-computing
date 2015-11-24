@@ -823,30 +823,69 @@ function, references to m[i][j] are written m[ldm*i+j].  */
  ----------------------------------------------------------------------
 */
 {
-	#define BUFOFFSET (0x01100000)
-	unsigned rows, cols, ncores;
-	e_platform_t platform;  // platform infos
-	e_epiphany_t dev;       // provides access to cores workgroup
-	e_mem_t emem;           // shared memory buffer
-	e_init(NULL);
-  e_reset_system();
-  e_get_platform_info(&platform);
-	e_alloc(&emem, BUFOFFSET, 4 * 16);
-	e_open(&dev, 0, 0, 3, 3); // Create an epiphany cores workgroup
-  // load programs into cores workgroup, do not execute it immediately
-	e_load_group("emain.srec", &dev, 0, 0, rows, cols, E_FALSE);
-  e_start_group(&dev);
-	rows = platform.rows;
-	cols = platform.cols;
-	ncores = rows * cols;
-	int result[2];
-	usleep(4000);
-	e_read(&emem, 0, 0, 0x0, &result, 16 * sizeof(int));
-	int z;
-	for(z = 0; z < 16; z++)
-    printf("Result from core n°%02i is 0x%04x\n",z, result[z]);
 
-	int j,i,jmin;
+
+
+
+
+	#include <stdio.h>
+	#include <stdlib.h>
+
+	#include <e-hal.h>  // Epiphany Hardware Abstraction Layer
+	                    // functionality for communicating with epiphany chip when
+	                    // the application runs on a host, typically the ARM µp
+
+	#define BUFOFFSET (0x01000000)  // SDRAM is at 0x8f00'0000,
+	                                // offset in e_read starts at 0x8e00'0000
+
+	unsigned rows, cols, i, j, ncores;
+
+	  e_platform_t platform;  // platform infos
+	  e_epiphany_t dev;       // provides access to cores workgroup
+	  e_mem_t emem;           // shared memory buffer
+
+		e_init(NULL);
+		e_reset_system();
+		e_get_platform_info(&platform);
+
+	  rows = platform.rows;
+	  cols = platform.cols;
+	  ncores = rows * cols;
+	  int result[ncores];     // to store the results, size of cores
+
+	  // allocate a space to share data between e_cores and here
+	  // offset starts from 0x8e00'0000
+	  // sdram (share space) is at 0x8f00'0000
+	  // so 0x8e00'0000 + 0x0100'0000 = 0x8f00'0000
+	  e_alloc(&emem, BUFOFFSET, 4*ncores);
+
+		e_open(&dev, 0, 0, rows, cols); // Create an epiphany cores workgroup
+		// load programs into cores workgroup, do not execute it immediately
+		e_load("emain.srec", &dev, 0, 0, rows, cols, E_FALSE);
+		e_start(&dev,0,0);
+		// e_read(&emem, 0, 0, 0x0, result, ncores * sizeof(int));
+		// while(result[0] != 3)
+		// 	e_read(&emem, 0, 0, 0x0, result, ncores * sizeof(int));
+		//e_start_group(&dev);
+
+		for(i=0; i < 200; i++)
+			y[i] = 20;
+
+		e_write(&dev,0,0,0x00,y,sizeof(float)*200);
+
+
+		// we read from the allocated space and store it to result array
+	  e_read(&emem, 0, 0, 0x0, result, ncores * sizeof(int)); // reads what's ben put in buffer
+	  for(i = 0; i < ncores; i++)
+	    printf("Result from core n°%02i is 0x%04x\n",i, result[i]);
+
+		e_close(&dev);
+		e_free(&emem);
+		e_finalize();
+
+
+
+	int jmin;
 	/* cleanup odd vector */
 
 	j = n2 % 2;

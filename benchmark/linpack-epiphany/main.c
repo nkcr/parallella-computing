@@ -23,9 +23,9 @@ void init_epiphany(e_platform_t * platform) {
  * Create the workgroup and load programs into it
  */
 init_workgroup(e_epiphany_t * dev) {
-  e_open(dev, 0, 0, 1, 1); // Create an epiphany cores workgroup
+  e_open(dev, 0, 0, rows, cols); // Create an epiphany cores workgroup
   // load programs into cores workgroup, do not execute it immediately
-  e_load_group("clinpack.srec", dev, 0, 0, rows, cols, E_FALSE);
+  e_load_group("emain.srec", dev, 0, 0, rows, cols, E_FALSE);
   e_start_group(dev);
 }
 
