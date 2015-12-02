@@ -828,6 +828,8 @@ function, references to m[i][j] are written m[ldm*i+j].  */
 
 
 
+
+
 	#include <stdio.h>
 	#include <stdlib.h>
 
@@ -837,53 +839,79 @@ function, references to m[i][j] are written m[ldm*i+j].  */
 
 	#define BUFOFFSET (0x01000000)  // SDRAM is at 0x8f00'0000,
 	                                // offset in e_read starts at 0x8e00'0000
+																	// so 0x8e00'0000 + 0x0100'0000 = 0x8f00'0000
 
-	unsigned rows, cols, i, j, ncores;
+		#define LOCKED (0)
+		#define UNLOCKED (1)
+
+		unsigned rows, cols, i, j, ncores, status;
 
 	  e_platform_t platform;  // platform infos
 	  e_epiphany_t dev;       // provides access to cores workgroup
-	  e_mem_t emem;           // shared memory buffer
 
-		e_init(NULL);
-		e_reset_system();
-		e_get_platform_info(&platform);
+		// Memory buffer
+		e_mem_t shared_result;
+	  e_mem_t sharedx;
+	  e_mem_t sharedy;
+		e_mem_t sharedm;
+		e_mem_t shared_status;
+
+	  e_init(NULL);
+	  e_reset_system();
+	  e_get_platform_info(&platform);
 
 	  rows = platform.rows;
 	  cols = platform.cols;
 	  ncores = rows * cols;
-	  int result[ncores];     // to store the results, size of cores
+		float result[ncores];
+		int statuses[ncores];
 
-	  // allocate a space to share data between e_cores and here
-	  // offset starts from 0x8e00'0000
-	  // sdram (share space) is at 0x8f00'0000
-	  // so 0x8e00'0000 + 0x0100'0000 = 0x8f00'0000
-	  e_alloc(&emem, BUFOFFSET, 4*ncores);
+		// Allocate memory buffers
+	  e_alloc(&shared_result, BUFOFFSET, ncores*sizeof(float));
+	  e_alloc(&sharedx, BUFOFFSET + ncores*sizeof(float), 200*sizeof(float));
+	  e_alloc(&sharedy, BUFOFFSET + ncores*sizeof(float) + 200*sizeof(float), 200*sizeof(float));
+		e_alloc(&sharedm, BUFOFFSET + ncores*sizeof(float) + 200*sizeof(float) + 200*sizeof(float), 200*201*sizeof(float));
+		e_alloc(&shared_status, BUFOFFSET + ncores*sizeof(float) + 200*sizeof(float) + 200*sizeof(float) + 200*201*sizeof(float), ncores*sizeof(int));
+		// Total of ~163 KB
 
-		e_open(&dev, 0, 0, rows, cols); // Create an epiphany cores workgroup
-		// load programs into cores workgroup, do not execute it immediately
-		e_load("emain.srec", &dev, 0, 0, rows, cols, E_FALSE);
-		e_start(&dev,0,0);
-		// e_read(&emem, 0, 0, 0x0, result, ncores * sizeof(int));
-		// while(result[0] != 3)
-		// 	e_read(&emem, 0, 0, 0x0, result, ncores * sizeof(int));
-		//e_start_group(&dev);
+	  // Write x and y to shared memory buffers
+		status = e_write(&sharedy, 0, 0, 0x0, x, 200*sizeof(float));
+		printf("[info] Status of sharedy writing: %i\n", status);
+	  status = e_write(&sharedx, 0, 0, 0x0, y, 200*sizeof(float));
+	  printf("[info] Status of sharedx writing: %i\n", status);
+		status = e_write(&sharedm, 0, 0, 0x0, m, 200*201*sizeof(float));
+		printf("[info] Status of sharedm writing: %i\n", status);
 
-		for(i=0; i < 200; i++)
-			y[i] = 20;
+		// Create workgroup of eCores
+	  e_open(&dev, 0, 0, rows, cols);
 
-		e_write(&dev,0,0,0x00,y,sizeof(float)*200);
+		// Load program to eCores
+	  for(i=0; i<rows; i++) {
+	    for(j=0; j<cols; j++) {
+	      e_load("emain.srec", &dev, i, j, E_FALSE);
+	      e_start(&dev, i, j);
+	    }
+	  }
 
+	int locked = LOCKED;
+	int unlocked = UNLOCKED;
+	int eCoreStatus;
 
-		// we read from the allocated space and store it to result array
-	  e_read(&emem, 0, 0, 0x0, result, ncores * sizeof(int)); // reads what's ben put in buffer
-	  for(i = 0; i < ncores; i++)
-	    printf("Result from core n°%02i is 0x%04x\n",i, result[i]);
-
-		e_close(&dev);
-		e_free(&emem);
-		e_finalize();
-
-
+	// unsigned looper = 0;
+	// while(1) {
+	// 	// Read eCore statuses
+	// 	e_read(&shared_status, 0, 0, 0x4*looper, &eCoreStatus, sizeof(int));
+	// 	// Is eCore Locked ?
+	// 	if( eCoreStatus == LOCKED ) {
+	// 		// Give eCore instructions
+	// 		//...
+	// 		// Set eCore to UNLOCKED
+	// 		e_write(&shared_status, 0, 0, 0x4*looper, &unlocked, sizeof(int));
+	// 		// Can go to next iteration
+	// 		break;
+	// 	}
+	// 	looper = (looper+1)%ncores;
+	// }
 
 	int jmin;
 	/* cleanup odd vector */
@@ -891,8 +919,9 @@ function, references to m[i][j] are written m[ldm*i+j].  */
 	j = n2 % 2;
 	if (j >= 1) {
 		j = j - 1;
-		for (i = 0; i < n1; i++)
-            		y[i] = (y[i]) + x[j]*m[ldm*j+i];
+		for (i = 0; i < n1; i++) {
+			y[i] = (y[i]) + x[j]*m[ldm*j+i];
+		}
 	}
 
 	/* cleanup odd group of two vectors */
@@ -934,25 +963,43 @@ function, references to m[i][j] are written m[ldm*i+j].  */
 
 	jmin = (n2%16)+16;
 	for (j = jmin-1; j < n2; j = j + 16) {
-		for (i = 0; i < n1; i++)
-			y[i] = ((((((((((((((( (y[i])
-			       	+ x[j-15]*m[ldm*(j-15)+i])
-				+ x[j-14]*m[ldm*(j-14)+i])
-			        + x[j-13]*m[ldm*(j-13)+i])
-				+ x[j-12]*m[ldm*(j-12)+i])
-			        + x[j-11]*m[ldm*(j-11)+i])
-				+ x[j-10]*m[ldm*(j-10)+i])
-			        + x[j- 9]*m[ldm*(j- 9)+i])
-				+ x[j- 8]*m[ldm*(j- 8)+i])
-			        + x[j- 7]*m[ldm*(j- 7)+i])
-				+ x[j- 6]*m[ldm*(j- 6)+i])
-			        + x[j- 5]*m[ldm*(j- 5)+i])
-				+ x[j- 4]*m[ldm*(j- 4)+i])
-			        + x[j- 3]*m[ldm*(j- 3)+i])
-				+ x[j- 2]*m[ldm*(j- 2)+i])
-			        + x[j- 1]*m[ldm*(j- 1)+i])
-				+ x[j]   *m[ldm*j+i];
+		for (i = 0; i < n1; i++) {
+
+
+
+			unsigned looper = 0;
+			while(1) {
+				// Read eCore statuses
+				e_read(&shared_status, 0, 0, 0x4*looper, &eCoreStatus, sizeof(int));
+				// Is eCore Locked ?
+				if( eCoreStatus == LOCKED ) {
+					//printf("eCore locked found at %i,%i\n",looper/rows,looper%cols);
+					// Give eCore instructions
+					e_write(&dev, looper/rows, looper%cols, 0x4*looper, &i, sizeof(int));
+					e_write(&dev, looper/rows, looper%cols, 0x4*(looper+1), &j, sizeof(int));
+					e_write(&dev, looper/rows, looper%cols, 0x4*(looper+2), &ldm, sizeof(int));
+					// Set eCore to UNLOCKED
+					e_write(&shared_status, 0, 0, 0x4*looper, &unlocked, sizeof(int));
+					// Can go to next iteration
+					break;
+				}
+				looper = (looper+1)%ncores;
+			}
+
+
+
+		}
 	}
+
+
+	// // Read result buffer
+	// e_read(&shared_result, 0, 0, 0x0, &result, ncores * sizeof(float)); // reads what's ben put in buffer
+	//
+	// // Print result
+	// for(i = 0; i < ncores; i++)
+	// 	printf("Result from core n°%02i is %f\n",i, result[i]);
+
+
 }
 
 /*----------------------*/
