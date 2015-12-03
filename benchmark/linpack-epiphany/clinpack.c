@@ -241,8 +241,8 @@ main ()
 	/* the following code sequence implements the semantics of
 	   the Fortran intrinsics "nint(min(time[3][3],time[3][7]))"	*/
 
-	kf = (time[3][3] < time[3][7]) ? time[3][3] : time[3][7];
-	fprintf(stderr, "time[3][3] : %f, time[3][7] : %f\n", time[3][3], time[3][7]);
+	kf = (time[3][3] < time[3][7]) ? time[3][3] : time[3][7]; // CHANGED to GREATER
+	// fprintf(stderr, "time[3][3] : %f, time[3][7] : %f\n", time[3][3], time[3][7]);
 	kf = (kf > ZERO) ? (kf + .5) : (kf - .5);
 	if (fabs((double)kf) < ONE)
 		kflops = 0;
