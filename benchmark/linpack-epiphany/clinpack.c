@@ -75,136 +75,134 @@ main ()
 	fprintf(stdout,ROLLING);fprintf(stdout,PREC);fprintf(stdout,"Precision Linpack\n\n");
 	fprintf(stderr,ROLLING);fprintf(stderr,PREC);fprintf(stderr,"Precision Linpack\n\n");
 
-        ops = (2.0e0*(n*n*n))/3.0 + 2.0*(n*n);
+  ops = (2.0e0*(n*n*n))/3.0 + 2.0*(n*n);
 
-        matgen(a,lda,n,b,&norma);
-        t1 = second();
-        dgefa(a,lda,n,ipvt,&info);
-        time[0][0] = second() - t1;
-        t1 = second();
-        dgesl(a,lda,n,ipvt,b,0);
-        time[1][0] = second() - t1;
-        total = time[0][0] + time[1][0];
+  matgen(a,lda,n,b,&norma);
+  t1 = second();
+  dgefa(a,lda,n,ipvt,&info);
+  time[0][0] = second() - t1;
+  t1 = second();
+  dgesl(a,lda,n,ipvt,b,0);
+  time[1][0] = second() - t1;
+  total = time[0][0] + time[1][0];
 
-/*     compute a residual to verify results.  */
+	/*   compute a residual to verify results.  */
 
-        for (i = 0; i < n; i++) {
-            	x[i] = b[i];
+  for (i = 0; i < n; i++) {
+  	x[i] = b[i];
 	}
-        matgen(a,lda,n,b,&norma);
-        for (i = 0; i < n; i++) {
-            	b[i] = -b[i];
+  matgen(a,lda,n,b,&norma);
+  for (i = 0; i < n; i++) {
+  	b[i] = -b[i];
 	}
-        dmxpy(n,b,n,lda,x,a);
-        resid = 0.0;
-        normx = 0.0;
-        for (i = 0; i < n; i++) {
-            	resid = (resid > fabs((double)b[i]))
-			? resid : fabs((double)b[i]);
-            	normx = (normx > fabs((double)x[i]))
-			? normx : fabs((double)x[i]);
+  dmxpy(n,b,n,lda,x,a); // Optimized function
+  resid = 0.0;
+  normx = 0.0;
+  for (i = 0; i < n; i++) {
+  	resid = (resid > fabs((double)b[i])) ? resid : fabs((double)b[i]);
+    normx = (normx > fabs((double)x[i])) ? normx : fabs((double)x[i]);
 	}
-        eps = epslon((REAL)ONE);
-        residn = resid/( n*norma*normx*eps );
+  eps = epslon((REAL)ONE);
+  residn = resid/( n*norma*normx*eps );
 
-   	printf("     norm. resid      resid           machep");
-        printf("         x[0]-1        x[n-1]-1\n");
+  printf("     norm. resid      resid           machep");
+  printf("         x[0]-1        x[n-1]-1\n");
 	printf("  %8.1f      %16.8e%16.8e%16.8e%16.8e\n",
-	       (double)residn, (double)resid, (double)eps,
-               (double)x[0]-1, (double)x[n-1]-1);
+			(double)residn, (double)resid, (double)eps,
+	    (double)x[0]-1, (double)x[n-1]-1);
 
-   	fprintf(stderr,"    times are reported for matrices of order %5d\n",n);
+  fprintf(stderr,"    times are reported for matrices of order %5d\n",n);
 	fprintf(stderr,"      dgefa      dgesl      total       kflops     unit");
 	fprintf(stderr,"      ratio\n");
 
-        time[2][0] = total;
-        time[3][0] = ops/(1.0e3*total);
-        time[4][0] = 2.0e3/time[3][0];
-        time[5][0] = total/cray;
+  time[2][0] = total;
+  time[3][0] = ops/(1.0e3*total);
+  time[4][0] = 2.0e3/time[3][0];
+  time[5][0] = total/cray;
 
-   	fprintf(stderr," times for array with leading dimension of%5d\n",lda);
+  fprintf(stderr," times for array with leading dimension of%5d\n",lda);
 	print_time(0);
 
-        matgen(a,lda,n,b,&norma);
-        t1 = second();
-        dgefa(a,lda,n,ipvt,&info);
-        time[0][1] = second() - t1;
-        t1 = second();
-        dgesl(a,lda,n,ipvt,b,0);
-        time[1][1] = second() - t1;
-        total = time[0][1] + time[1][1];
-        time[2][1] = total;
-        time[3][1] = ops/(1.0e3*total);
-        time[4][1] = 2.0e3/time[3][1];
-        time[5][1] = total/cray;
+  matgen(a,lda,n,b,&norma);
+  t1 = second();
+  dgefa(a,lda,n,ipvt,&info);
+  time[0][1] = second() - t1;
+  t1 = second();
+  dgesl(a,lda,n,ipvt,b,0);
+  time[1][1] = second() - t1;
+  total = time[0][1] + time[1][1];
+  time[2][1] = total;
+  time[3][1] = ops/(1.0e3*total);
+  time[4][1] = 2.0e3/time[3][1];
+  time[5][1] = total/cray;
 
-        matgen(a,lda,n,b,&norma);
-        t1 = second();
-        dgefa(a,lda,n,ipvt,&info);
-        time[0][2] = second() - t1;
-        t1 = second();
-        dgesl(a,lda,n,ipvt,b,0);
-        time[1][2] = second() - t1;
-        total = time[0][2] + time[1][2];
-        time[2][2] = total;
-        time[3][2] = ops/(1.0e3*total);
-        time[4][2] = 2.0e3/time[3][2];
-        time[5][2] = total/cray;
+  matgen(a,lda,n,b,&norma);
+  t1 = second();
+  dgefa(a,lda,n,ipvt,&info);
+  time[0][2] = second() - t1;
+  t1 = second();
+  dgesl(a,lda,n,ipvt,b,0);
+  time[1][2] = second() - t1;
+  total = time[0][2] + time[1][2];
+  time[2][2] = total;
+  time[3][2] = ops/(1.0e3*total);
+  time[4][2] = 2.0e3/time[3][2];
+  time[5][2] = total/cray;
 
-        ntimes = NTIMES;
-        tm2 = 0.0;
-        t1 = second();
+  ntimes = NTIMES;
+  tm2 = 0.0;
+  t1 = second();
 
 	for (i = 0; i < ntimes; i++) {
-            	tm = second();
+    tm = second();
 		matgen(a,lda,n,b,&norma);
 		tm2 = tm2 + second() - tm;
 		dgefa(a,lda,n,ipvt,&info);
 	}
 
-        time[0][3] = (second() - t1 - tm2)/ntimes;
-        t1 = second();
+  time[0][3] = (second() - t1 - tm2)/ntimes;
+  t1 = second();
 
 	for (i = 0; i < ntimes; i++) {
-            	dgesl(a,lda,n,ipvt,b,0);
+  	dgesl(a,lda,n,ipvt,b,0);
 	}
 
-        time[1][3] = (second() - t1)/ntimes;
-        total = time[0][3] + time[1][3];
-        time[2][3] = total;
-        time[3][3] = ops/(1.0e3*total);
-        time[4][3] = 2.0e3/time[3][3];
-        time[5][3] = total/cray;
+  time[1][3] = (second() - t1)/ntimes;
+  total = time[0][3] + time[1][3];
+  time[2][3] = total;
+  time[3][3] = ops/(1.0e3*total);
+  time[4][3] = 2.0e3/time[3][3];
+  time[5][3] = total/cray;
 
 	print_time(1);
 	print_time(2);
 	print_time(3);
 
-        matgen(aa,ldaa,n,b,&norma);
-        t1 = second();
-        dgefa(aa,ldaa,n,ipvt,&info);
-        time[0][4] = second() - t1;
-        t1 = second();
-        dgesl(aa,ldaa,n,ipvt,b,0);
-        time[1][4] = second() - t1;
-        total = time[0][4] + time[1][4];
-        time[2][4] = total;
-        time[3][4] = ops/(1.0e3*total);
-        time[4][4] = 2.0e3/time[3][4];
-        time[5][4] = total/cray;
+  matgen(aa,ldaa,n,b,&norma);
+  t1 = second();
+  dgefa(aa,ldaa,n,ipvt,&info);
+  time[0][4] = second() - t1;
+  t1 = second();
+  dgesl(aa,ldaa,n,ipvt,b,0);
+  time[1][4] = second() - t1;
+  total = time[0][4] + time[1][4];
+  time[2][4] = total;
+  time[3][4] = ops/(1.0e3*total);
+  time[4][4] = 2.0e3/time[3][4];
+  time[5][4] = total/cray;
 
-        matgen(aa,ldaa,n,b,&norma);
-        t1 = second();
-        dgefa(aa,ldaa,n,ipvt,&info);
-        time[0][5] = second() - t1;
-        t1 = second();
-        dgesl(aa,ldaa,n,ipvt,b,0);
-        time[1][5] = second() - t1;
-        total = time[0][5] + time[1][5];
-        time[2][5] = total;
-        time[3][5] = ops/(1.0e3*total);
-        time[4][5] = 2.0e3/time[3][5];
-        time[5][5] = total/cray;
+  matgen(aa,ldaa,n,b,&norma);
+  t1 = second();
+  dgefa(aa,ldaa,n,ipvt,&info);
+  time[0][5] = second() - t1;
+  t1 = second();
+  dgesl(aa,ldaa,n,ipvt,b,0);
+  time[1][5] = second() - t1;
+  total = time[0][5] + time[1][5];
+  time[2][5] = total;
+  time[3][5] = ops/(1.0e3*total);
+  time[4][5] = 2.0e3/time[3][5];
+  time[5][5] = total/cray;
 
 	matgen(aa,ldaa,n,b,&norma);
 	t1 = second();
@@ -244,6 +242,7 @@ main ()
 	   the Fortran intrinsics "nint(min(time[3][3],time[3][7]))"	*/
 
 	kf = (time[3][3] < time[3][7]) ? time[3][3] : time[3][7];
+	fprintf(stderr, "time[3][3] : %f, time[3][7] : %f\n", time[3][3], time[3][7]);
 	kf = (kf > ZERO) ? (kf + .5) : (kf - .5);
 	if (fabs((double)kf) < ONE)
 		kflops = 0;
@@ -266,8 +265,8 @@ print_time (row)
 int row;
 {
 fprintf(stderr,"%11.2f%11.2f%11.2f%11.0f%11.2f%11.2f\n",   (double)time[0][row],
-       (double)time[1][row], (double)time[2][row], (double)time[3][row],
-       (double)time[4][row], (double)time[5][row]);
+		(double)time[1][row], (double)time[2][row], (double)time[3][row],
+    (double)time[4][row], (double)time[5][row]);
 }
 
 /*----------------------*/
