@@ -23,7 +23,7 @@ case $(uname -p) in
 esac
 
 # Build HOST side application
-${CROSS_PREFIX}gcc -DSP -DUNROLL -Os clinpack.c -o clinpack.elf  ${EINCS} ${ELIBS} -le-hal -le-loader -lpthread -lm -pg
+${CROSS_PREFIX}gcc -DSP -DUNROLL -O4 clinpack.c -o clinpack.elf  ${EINCS} ${ELIBS} -le-hal -le-loader -lpthread -lm
 
 # Build DEVICE side program
 # -T specifies the linker file
