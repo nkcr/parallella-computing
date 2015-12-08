@@ -570,7 +570,9 @@ int incx,incy,n;
 
 #ifdef ROLL
 	for (i = 0;i < n; i++) {
+
 		dy[i] = dy[i] + da*dx[i];
+
 	}
 #endif
 #ifdef UNROLL
