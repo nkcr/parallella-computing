@@ -1,0 +1,1025 @@
+        -:    0:Source:clinpack.c
+        -:    0:Graph:clinpack.gcno
+        -:    0:Data:clinpack.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:/*
+        -:    2:
+        -:    3:Translated to C by Bonnie Toy 5/88
+        -:    4: - modified on 2/25/94  to fix a problem with daxpy  for
+        -:    5:   unequal increments or equal increments not equal to 1.
+        -:    6:     Jack Dongarra
+        -:    7: - modified on 08/27/09 fix typo line 270, plus set 'ix' to 0
+        -:    8:  in the case incx is not 1
+        -:    9:     Julie Langou
+        -:   10:
+        -:   11:To compile single precision version for Sun-4:
+        -:   12:
+        -:   13:	cc -DSP -O4 -fsingle -fsingle2 clinpack.c -lm
+        -:   14:
+        -:   15:To compile double precision version for Sun-4:
+        -:   16:
+        -:   17:	cc -DDP -O4 clinpack.c -lm
+        -:   18:
+        -:   19:To obtain rolled source BLAS, add -DROLL to the command lines.
+        -:   20:To obtain unrolled source BLAS, add -DUNROLL to the command lines.
+        -:   21:
+        -:   22:You must specify one of -DSP or -DDP to compile correctly.
+        -:   23:
+        -:   24:You must specify one of -DROLL or -DUNROLL to compile correctly.
+        -:   25:
+        -:   26:>> cc -DSP -DROLL -O4 clinpack.c -lm (nkcr)
+        -:   27:*/
+        -:   28:
+        -:   29:#ifdef SP
+        -:   30:#define REAL float
+        -:   31:#define ZERO 0.0
+        -:   32:#define ONE 1.0
+        -:   33:#define PREC "Single "
+        -:   34:#endif
+        -:   35:
+        -:   36:#ifdef DP
+        -:   37:#define REAL double
+        -:   38:#define ZERO 0.0e0
+        -:   39:#define ONE 1.0e0
+        -:   40:#define PREC "Double "
+        -:   41:#endif
+        -:   42:
+        -:   43:#define NTIMES 100
+        -:   44:
+        -:   45:#ifdef ROLL
+        -:   46:#define ROLLING "Rolled "
+        -:   47:#endif
+        -:   48:#ifdef UNROLL
+        -:   49:#define ROLLING "Unrolled "
+        -:   50:#endif
+        -:   51:
+        -:   52:#include <stdio.h>
+        -:   53:#include <math.h>
+        -:   54:
+        -:   55:#include <stdlib.h>
+        -:   56:#include <e-hal.h>  // Epiphany Hardware Abstraction Layer
+        -:   57:                    // functionality for communicating with epiphany chip when
+        -:   58:                    // the application runs on a host, typically the ARM µp
+        -:   59:
+        -:   60:static REAL time[9][9];
+        -:   61:
+        1:   62:main ()
+        -:   63:{
+        -:   64:	static REAL aa[200][200],a[200][201],b[200],x[200];
+        -:   65:	REAL cray,ops,total,norma,normx;
+        -:   66:	REAL resid,residn,eps,t1,tm,tm2;
+        -:   67:	REAL epslon(),second(),kf;
+        -:   68:	static int ipvt[200],n,i,ntimes,info,lda,ldaa,kflops;
+        -:   69:
+        1:   70:	lda = 201;
+        1:   71:	ldaa = 200;
+        -:   72:	cray = .056;
+        1:   73:	n = 100;
+        -:   74:
+        3:   75:	fprintf(stdout,ROLLING);fprintf(stdout,PREC);fprintf(stdout,"Precision Linpack\n\n");
+        3:   76:	fprintf(stderr,ROLLING);fprintf(stderr,PREC);fprintf(stderr,"Precision Linpack\n\n");
+        -:   77:
+        1:   78:  ops = (2.0e0*(n*n*n))/3.0 + 2.0*(n*n);
+        -:   79:
+        1:   80:  matgen(a,lda,n,b,&norma);
+        1:   81:  t1 = second();
+        1:   82:  dgefa(a,lda,n,ipvt,&info);
+        1:   83:  time[0][0] = second() - t1;
+        1:   84:  t1 = second();
+        1:   85:  dgesl(a,lda,n,ipvt,b,0);
+        1:   86:  time[1][0] = second() - t1;
+        1:   87:  total = time[0][0] + time[1][0];
+        -:   88:
+        -:   89:	/*   compute a residual to verify results.  */
+        -:   90:
+      101:   91:  for (i = 0; i < n; i++) {
+      100:   92:  	x[i] = b[i];
+        -:   93:	}
+        1:   94:  matgen(a,lda,n,b,&norma);
+      101:   95:  for (i = 0; i < n; i++) {
+      100:   96:  	b[i] = -b[i];
+        -:   97:	}
+        1:   98:  dmxpy(n,b,n,lda,x,a); // Optimized function
+        -:   99:  resid = 0.0;
+        -:  100:  normx = 0.0;
+      101:  101:  for (i = 0; i < n; i++) {
+      100:  102:  	resid = (resid > fabs((double)b[i])) ? resid : fabs((double)b[i]);
+      100:  103:    normx = (normx > fabs((double)x[i])) ? normx : fabs((double)x[i]);
+        -:  104:	}
+        -:  105:  eps = epslon((REAL)ONE);
+        1:  106:  residn = resid/( n*norma*normx*eps );
+        -:  107:
+        -:  108:  printf("     norm. resid      resid           machep");
+        -:  109:  printf("         x[0]-1        x[n-1]-1\n");
+        3:  110:	printf("  %8.1f      %16.8e%16.8e%16.8e%16.8e\n",
+        -:  111:			(double)residn, (double)resid, (double)eps,
+        2:  112:	    (double)x[0]-1, (double)x[n-1]-1);
+        -:  113:
+        1:  114:  fprintf(stderr,"    times are reported for matrices of order %5d\n",n);
+        1:  115:	fprintf(stderr,"      dgefa      dgesl      total       kflops     unit");
+        1:  116:	fprintf(stderr,"      ratio\n");
+        -:  117:
+        1:  118:  time[2][0] = total;
+        1:  119:  time[3][0] = ops/(1.0e3*total);
+        1:  120:  time[4][0] = 2.0e3/time[3][0];
+        1:  121:  time[5][0] = total/cray;
+        -:  122:
+        1:  123:  fprintf(stderr," times for array with leading dimension of%5d\n",lda);
+        1:  124:	print_time(0);
+        -:  125:
+        1:  126:  matgen(a,lda,n,b,&norma);
+        1:  127:  t1 = second();
+        1:  128:  dgefa(a,lda,n,ipvt,&info);
+        1:  129:  time[0][1] = second() - t1;
+        1:  130:  t1 = second();
+        1:  131:  dgesl(a,lda,n,ipvt,b,0);
+        1:  132:  time[1][1] = second() - t1;
+        1:  133:  total = time[0][1] + time[1][1];
+        1:  134:  time[2][1] = total;
+        1:  135:  time[3][1] = ops/(1.0e3*total);
+        1:  136:  time[4][1] = 2.0e3/time[3][1];
+        1:  137:  time[5][1] = total/cray;
+        -:  138:
+        1:  139:  matgen(a,lda,n,b,&norma);
+        1:  140:  t1 = second();
+        1:  141:  dgefa(a,lda,n,ipvt,&info);
+        1:  142:  time[0][2] = second() - t1;
+        1:  143:  t1 = second();
+        1:  144:  dgesl(a,lda,n,ipvt,b,0);
+        1:  145:  time[1][2] = second() - t1;
+        1:  146:  total = time[0][2] + time[1][2];
+        1:  147:  time[2][2] = total;
+        1:  148:  time[3][2] = ops/(1.0e3*total);
+        1:  149:  time[4][2] = 2.0e3/time[3][2];
+        1:  150:  time[5][2] = total/cray;
+        -:  151:
+        1:  152:  ntimes = NTIMES;
+        -:  153:  tm2 = 0.0;
+        1:  154:  t1 = second();
+        -:  155:
+      101:  156:	for (i = 0; i < ntimes; i++) {
+      100:  157:    tm = second();
+      100:  158:		matgen(a,lda,n,b,&norma);
+      100:  159:		tm2 = tm2 + second() - tm;
+      100:  160:		dgefa(a,lda,n,ipvt,&info);
+        -:  161:	}
+        -:  162:
+        1:  163:  time[0][3] = (second() - t1 - tm2)/ntimes;
+        1:  164:  t1 = second();
+        -:  165:
+      101:  166:	for (i = 0; i < ntimes; i++) {
+      100:  167:  	dgesl(a,lda,n,ipvt,b,0);
+        -:  168:	}
+        -:  169:
+        1:  170:  time[1][3] = (second() - t1)/ntimes;
+        1:  171:  total = time[0][3] + time[1][3];
+        1:  172:  time[2][3] = total;
+        1:  173:  time[3][3] = ops/(1.0e3*total);
+        1:  174:  time[4][3] = 2.0e3/time[3][3];
+        1:  175:  time[5][3] = total/cray;
+        -:  176:
+        1:  177:	print_time(1);
+        1:  178:	print_time(2);
+        1:  179:	print_time(3);
+        -:  180:
+        1:  181:  matgen(aa,ldaa,n,b,&norma);
+        1:  182:  t1 = second();
+        1:  183:  dgefa(aa,ldaa,n,ipvt,&info);
+        1:  184:  time[0][4] = second() - t1;
+        1:  185:  t1 = second();
+        1:  186:  dgesl(aa,ldaa,n,ipvt,b,0);
+        1:  187:  time[1][4] = second() - t1;
+        1:  188:  total = time[0][4] + time[1][4];
+        1:  189:  time[2][4] = total;
+        1:  190:  time[3][4] = ops/(1.0e3*total);
+        1:  191:  time[4][4] = 2.0e3/time[3][4];
+        1:  192:  time[5][4] = total/cray;
+        -:  193:
+        1:  194:  matgen(aa,ldaa,n,b,&norma);
+        1:  195:  t1 = second();
+        1:  196:  dgefa(aa,ldaa,n,ipvt,&info);
+        1:  197:  time[0][5] = second() - t1;
+        1:  198:  t1 = second();
+        1:  199:  dgesl(aa,ldaa,n,ipvt,b,0);
+        1:  200:  time[1][5] = second() - t1;
+        1:  201:  total = time[0][5] + time[1][5];
+        1:  202:  time[2][5] = total;
+        1:  203:  time[3][5] = ops/(1.0e3*total);
+        1:  204:  time[4][5] = 2.0e3/time[3][5];
+        1:  205:  time[5][5] = total/cray;
+        -:  206:
+        1:  207:	matgen(aa,ldaa,n,b,&norma);
+        1:  208:	t1 = second();
+        1:  209:	dgefa(aa,ldaa,n,ipvt,&info);
+        1:  210:	time[0][6] = second() - t1;
+        1:  211:	t1 = second();
+        1:  212:	dgesl(aa,ldaa,n,ipvt,b,0);
+        1:  213:	time[1][6] = second() - t1;
+        1:  214:	total = time[0][6] + time[1][6];
+        1:  215:	time[2][6] = total;
+        1:  216:	time[3][6] = ops/(1.0e3*total);
+        1:  217:	time[4][6] = 2.0e3/time[3][6];
+        1:  218:	time[5][6] = total/cray;
+        -:  219:
+        1:  220:	ntimes = NTIMES;
+        -:  221:	tm2 = 0;
+        1:  222:	t1 = second();
+      101:  223:	for (i = 0; i < ntimes; i++) {
+      100:  224:		tm = second();
+      100:  225:		matgen(aa,ldaa,n,b,&norma);
+      100:  226:		tm2 = tm2 + second() - tm;
+      100:  227:		dgefa(aa,ldaa,n,ipvt,&info);
+        -:  228:	}
+        1:  229:	time[0][7] = (second() - t1 - tm2)/ntimes;
+        1:  230:	t1 = second();
+      101:  231:	for (i = 0; i < ntimes; i++) {
+      100:  232:		dgesl(aa,ldaa,n,ipvt,b,0);
+        -:  233:	}
+        1:  234:	time[1][7] = (second() - t1)/ntimes;
+        1:  235:	total = time[0][7] + time[1][7];
+        1:  236:	time[2][7] = total;
+        1:  237:	time[3][7] = ops/(1.0e3*total);
+        1:  238:	time[4][7] = 2.0e3/time[3][7];
+        1:  239:	time[5][7] = total/cray;
+        -:  240:
+        -:  241:	/* the following code sequence implements the semantics of
+        -:  242:	   the Fortran intrinsics "nint(min(time[3][3],time[3][7]))"	*/
+        -:  243:
+        1:  244:	kf = (time[3][3] < time[3][7]) ? time[3][3] : time[3][7]; // CHANGED to GREATER
+        -:  245:	// fprintf(stderr, "time[3][3] : %f, time[3][7] : %f\n", time[3][3], time[3][7]);
+        1:  246:	kf = (kf > ZERO) ? (kf + .5) : (kf - .5);
+        1:  247:	if (fabs((double)kf) < ONE)
+    #####:  248:		kflops = 0;
+        -:  249:	else {
+        1:  250:		kflops = floor(fabs((double)kf));
+        1:  251:		if (kf < ZERO) kflops = -kflops;
+        -:  252:	}
+        -:  253:
+        1:  254:	fprintf(stderr," times for array with leading dimension of%4d\n",ldaa);
+        1:  255:	print_time(4);
+        1:  256:	print_time(5);
+        1:  257:	print_time(6);
+        1:  258:	print_time(7);
+        2:  259:	fprintf(stderr,ROLLING);fprintf(stderr,PREC);
+        1:  260:	fprintf(stderr," Precision %5d Kflops ; %d Reps \n",kflops,NTIMES);
+        1:  261:}
+        -:  262:
+        -:  263:/*----------------------*/
+        8:  264:print_time (row)
+        -:  265:int row;
+        -:  266:{
+       48:  267:fprintf(stderr,"%11.2f%11.2f%11.2f%11.0f%11.2f%11.2f\n",   (double)time[0][row],
+       24:  268:		(double)time[1][row], (double)time[2][row], (double)time[3][row],
+       16:  269:    (double)time[4][row], (double)time[5][row]);
+        8:  270:}
+        -:  271:
+        -:  272:/*----------------------*/
+      207:  273:matgen(a,lda,n,b,norma)
+        -:  274:REAL a[],b[],*norma;
+        -:  275:int lda, n;
+        -:  276:
+        -:  277:/* We would like to declare a[][lda], but c does not allow it.  In this
+        -:  278:function, references to a[i][j] are written a[lda*j+i].  */
+        -:  279:
+        -:  280:{
+        -:  281:	int init, i, j;
+        -:  282:
+        -:  283:	init = 1325;
+      207:  284:	*norma = 0.0;
+    20907:  285:	for (j = 0; j < n; j++) {
+  2070000:  286:		for (i = 0; i < n; i++) {
+  2070000:  287:			init = 3125*init % 65536;
+  2070000:  288:			a[lda*j+i] = (init - 32768.0)/16384.0;
+  2070000:  289:			*norma = (a[lda*j+i] > *norma) ? a[lda*j+i] : *norma;
+        -:  290:		}
+        -:  291:	}
+    20700:  292:	for (i = 0; i < n; i++) {
+    20700:  293:          b[i] = 0.0;
+        -:  294:	}
+    20700:  295:	for (j = 0; j < n; j++) {
+  2070000:  296:		for (i = 0; i < n; i++) {
+  2070000:  297:			b[i] = b[i] + a[lda*j+i];
+        -:  298:		}
+        -:  299:	}
+      207:  300:}
+        -:  301:
+        -:  302:/*----------------------*/
+      206:  303:dgefa(a,lda,n,ipvt,info)
+        -:  304:REAL a[];
+        -:  305:int lda,n,ipvt[],*info;
+        -:  306:
+        -:  307:/* We would like to declare a[][lda], but c does not allow it.  In this
+        -:  308:function, references to a[i][j] are written a[lda*i+j].  */
+        -:  309:/*
+        -:  310:     dgefa factors a double precision matrix by gaussian elimination.
+        -:  311:
+        -:  312:     dgefa is usually called by dgeco, but it can be called
+        -:  313:     directly with a saving in time if  rcond  is not needed.
+        -:  314:     (time for dgeco) = (1 + 9/n)*(time for dgefa) .
+        -:  315:
+        -:  316:     on entry
+        -:  317:
+        -:  318:        a       REAL precision[n][lda]
+        -:  319:                the matrix to be factored.
+        -:  320:
+        -:  321:        lda     integer
+        -:  322:                the leading dimension of the array  a .
+        -:  323:
+        -:  324:        n       integer
+        -:  325:                the order of the matrix  a .
+        -:  326:
+        -:  327:     on return
+        -:  328:
+        -:  329:        a       an upper triangular matrix and the multipliers
+        -:  330:                which were used to obtain it.
+        -:  331:                the factorization can be written  a = l*u  where
+        -:  332:                l  is a product of permutation and unit lower
+        -:  333:                triangular matrices and  u  is upper triangular.
+        -:  334:
+        -:  335:        ipvt    integer[n]
+        -:  336:                an integer vector of pivot indices.
+        -:  337:
+        -:  338:        info    integer
+        -:  339:                = 0  normal value.
+        -:  340:                = k  if  u[k][k] .eq. 0.0 .  this is not an error
+        -:  341:                     condition for this subroutine, but it does
+        -:  342:                     indicate that dgesl or dgedi will divide by zero
+        -:  343:                     if called.  use  rcond  in dgeco for a reliable
+        -:  344:                     indication of singularity.
+        -:  345:
+        -:  346:     linpack. this version dated 08/14/78 .
+        -:  347:     cleve moler, university of new mexico, argonne national lab.
+        -:  348:
+        -:  349:     functions
+        -:  350:
+        -:  351:     blas daxpy,dscal,idamax
+        -:  352:*/
+        -:  353:
+        -:  354:{
+        -:  355:/*     internal variables	*/
+        -:  356:
+        -:  357:REAL t;
+        -:  358:int idamax(),j,k,kp1,l,nm1;
+        -:  359:
+        -:  360:
+        -:  361:/*     gaussian elimination with partial pivoting	*/
+        -:  362:
+      206:  363:	*info = 0;
+      206:  364:	nm1 = n - 1;
+      206:  365:	if (nm1 >=  0) {
+    20600:  366:		for (k = 0; k < nm1; k++) {
+    20394:  367:			kp1 = k + 1;
+        -:  368:
+        -:  369:          		/* find l = pivot index	*/
+        -:  370:
+    20394:  371:			l = idamax(n-k,&a[lda*k+k],1) + k;
+    20394:  372:			ipvt[k] = l;
+        -:  373:
+        -:  374:			/* zero pivot implies this column already
+        -:  375:			   triangularized */
+        -:  376:
+    20394:  377:			if (a[lda*k+l] != ZERO) {
+        -:  378:
+        -:  379:				/* interchange if necessary */
+        -:  380:
+    20394:  381:				if (l != k) {
+        -:  382:					t = a[lda*k+l];
+    19158:  383:					a[lda*k+l] = a[lda*k+k];
+    19158:  384:					a[lda*k+k] = t;
+        -:  385:				}
+        -:  386:
+        -:  387:				/* compute multipliers */
+        -:  388:
+    20394:  389:				t = -ONE/a[lda*k+k];
+    20394:  390:				dscal(n-(k+1),t,&a[lda*k+k+1],1);
+        -:  391:
+        -:  392:				/* row elimination with column indexing */
+        -:  393:
+  1040094:  394:				for (j = kp1; j < n; j++) {
+  1019700:  395:					t = a[lda*j+l];
+  1019700:  396:					if (l != k) {
+   979324:  397:						a[lda*j+l] = a[lda*j+k];
+   979324:  398:						a[lda*j+k] = t;
+        -:  399:					}
+  2039400:  400:					daxpy(n-(k+1),t,&a[lda*k+k+1],1,
+  1019700:  401:					      &a[lda*j+k+1],1);
+        -:  402:  				}
+        -:  403:  			}
+        -:  404:			else {
+    #####:  405:            			*info = k;
+        -:  406:			}
+        -:  407:		}
+        -:  408:	}
+      206:  409:	ipvt[n-1] = n-1;
+      206:  410:	if (a[lda*(n-1)+(n-1)] == ZERO) *info = n-1;
+      206:  411:}
+        -:  412:
+        -:  413:/*----------------------*/
+        -:  414:
+      206:  415:dgesl(a,lda,n,ipvt,b,job)
+        -:  416:int lda,n,ipvt[],job;
+        -:  417:REAL a[],b[];
+        -:  418:
+        -:  419:/* We would like to declare a[][lda], but c does not allow it.  In this
+        -:  420:function, references to a[i][j] are written a[lda*i+j].  */
+        -:  421:
+        -:  422:/*
+        -:  423:     dgesl solves the double precision system
+        -:  424:     a * x = b  or  trans(a) * x = b
+        -:  425:     using the factors computed by dgeco or dgefa.
+        -:  426:
+        -:  427:     on entry
+        -:  428:
+        -:  429:        a       double precision[n][lda]
+        -:  430:                the output from dgeco or dgefa.
+        -:  431:
+        -:  432:        lda     integer
+        -:  433:                the leading dimension of the array  a .
+        -:  434:
+        -:  435:        n       integer
+        -:  436:                the order of the matrix  a .
+        -:  437:
+        -:  438:        ipvt    integer[n]
+        -:  439:                the pivot vector from dgeco or dgefa.
+        -:  440:
+        -:  441:        b       double precision[n]
+        -:  442:                the right hand side vector.
+        -:  443:
+        -:  444:        job     integer
+        -:  445:                = 0         to solve  a*x = b ,
+        -:  446:                = nonzero   to solve  trans(a)*x = b  where
+        -:  447:                            trans(a)  is the transpose.
+        -:  448:
+        -:  449:    on return
+        -:  450:
+        -:  451:        b       the solution vector  x .
+        -:  452:
+        -:  453:     error condition
+        -:  454:
+        -:  455:        a division by zero will occur if the input factor contains a
+        -:  456:        zero on the diagonal.  technically this indicates singularity
+        -:  457:        but it is often caused by improper arguments or improper
+        -:  458:        setting of lda .  it will not occur if the subroutines are
+        -:  459:        called correctly and if dgeco has set rcond .gt. 0.0
+        -:  460:        or dgefa has set info .eq. 0 .
+        -:  461:
+        -:  462:     to compute  inverse(a) * c  where  c  is a matrix
+        -:  463:     with  p  columns
+        -:  464:           dgeco(a,lda,n,ipvt,rcond,z)
+        -:  465:           if (!rcond is too small){
+        -:  466:           	for (j=0,j<p,j++)
+        -:  467:              		dgesl(a,lda,n,ipvt,c[j][0],0);
+        -:  468:	   }
+        -:  469:
+        -:  470:     linpack. this version dated 08/14/78 .
+        -:  471:     cleve moler, university of new mexico, argonne national lab.
+        -:  472:
+        -:  473:     functions
+        -:  474:
+        -:  475:     blas daxpy,ddot
+        -:  476:*/
+        -:  477:{
+        -:  478:/*     internal variables	*/
+        -:  479:
+        -:  480:	REAL ddot(),t;
+        -:  481:	int k,kb,l,nm1;
+        -:  482:
+      206:  483:	nm1 = n - 1;
+      206:  484:	if (job == 0) {
+        -:  485:
+        -:  486:		/* job = 0 , solve  a * x = b
+        -:  487:		   first solve  l*y = b    	*/
+        -:  488:
+      206:  489:		if (nm1 >= 1) {
+    20394:  490:			for (k = 0; k < nm1; k++) {
+    20394:  491:				l = ipvt[k];
+    20394:  492:				t = b[l];
+    20394:  493:				if (l != k){
+    19158:  494:					b[l] = b[k];
+    19158:  495:					b[k] = t;
+        -:  496:				}
+    20394:  497:				daxpy(n-(k+1),t,&a[lda*k+k+1],1,&b[k+1],1);
+        -:  498:			}
+        -:  499:		}
+        -:  500:
+        -:  501:		/* now solve  u*x = y */
+        -:  502:
+    20600:  503:		for (kb = 0; kb < n; kb++) {
+    20600:  504:		    k = n - (kb + 1);
+    20600:  505:		    b[k] = b[k]/a[lda*k+k];
+    20600:  506:		    t = -b[k];
+    20600:  507:		    daxpy(k,t,&a[lda*k+0],1,&b[0],1);
+        -:  508:		}
+        -:  509:	}
+        -:  510:	else {
+        -:  511:
+        -:  512:		/* job = nonzero, solve  trans(a) * x = b
+        -:  513:		   first solve  trans(u)*y = b 			*/
+        -:  514:
+    #####:  515:		for (k = 0; k < n; k++) {
+    #####:  516:			t = ddot(k,&a[lda*k+0],1,&b[0],1);
+    #####:  517:			b[k] = (b[k] - t)/a[lda*k+k];
+        -:  518:		}
+        -:  519:
+        -:  520:		/* now solve trans(l)*x = y	*/
+        -:  521:
+    #####:  522:		if (nm1 >= 1) {
+    #####:  523:			for (kb = 1; kb < nm1; kb++) {
+    #####:  524:				k = n - (kb+1);
+    #####:  525:				b[k] = b[k] + ddot(n-(k+1),&a[lda*k+k+1],1,&b[k+1],1);
+    #####:  526:				l = ipvt[k];
+    #####:  527:				if (l != k) {
+    #####:  528:					t = b[l];
+    #####:  529:					b[l] = b[k];
+    #####:  530:					b[k] = t;
+        -:  531:				}
+        -:  532:			}
+        -:  533:		}
+        -:  534:	}
+      206:  535:}
+        -:  536:
+        -:  537:/*----------------------*/
+        -:  538:
+  1060694:  539:daxpy(n,da,dx,incx,dy,incy)
+        -:  540:/*
+        -:  541:     constant times a vector plus a vector.
+        -:  542:     jack dongarra, linpack, 3/11/78.
+        -:  543:*/
+        -:  544:REAL dx[],dy[],da;
+        -:  545:int incx,incy,n;
+        -:  546:{
+        -:  547:	int i,ix,iy,m,mp1;
+        -:  548:
+  1060694:  549:	if(n <= 0) return;
+  1060488:  550:	if (da == ZERO) return;
+        -:  551:
+  1060488:  552:	if(incx != 1 || incy != 1) {
+        -:  553:
+        -:  554:		/* code for unequal increments or equal increments
+        -:  555:		   not equal to 1 					*/
+        -:  556:
+        -:  557:		ix = 0;
+        -:  558:		iy = 0;
+    #####:  559:		if(incx < 0) ix = (-n+1)*incx;
+    #####:  560:		if(incy < 0)iy = (-n+1)*incy;
+    #####:  561:		for (i = 0;i < n; i++) {
+    #####:  562:			dy[iy] = dy[iy] + da*dx[ix];
+    #####:  563:			ix = ix + incx;
+    #####:  564:			iy = iy + incy;
+        -:  565:		}
+        -:  566:      		return;
+        -:  567:	}
+        -:  568:
+        -:  569:	/* code for both increments equal to 1 */
+        -:  570:
+        -:  571:#ifdef ROLL
+ 69679500:  572:	for (i = 0;i < n; i++) {
+ 69679500:  573:		dy[i] = dy[i] + da*dx[i];
+        -:  574:	}
+        -:  575:#endif
+        -:  576:#ifdef UNROLL
+        -:  577:
+        -:  578:	m = n % 4;
+        -:  579:	if ( m != 0) {
+        -:  580:		for (i = 0; i < m; i++)
+        -:  581:			dy[i] = dy[i] + da*dx[i];
+        -:  582:		if (n < 4) return;
+        -:  583:	}
+        -:  584:	for (i = m; i < n; i = i + 4) {
+        -:  585:		dy[i] = dy[i] + da*dx[i];
+        -:  586:		dy[i+1] = dy[i+1] + da*dx[i+1];
+        -:  587:		dy[i+2] = dy[i+2] + da*dx[i+2];
+        -:  588:		dy[i+3] = dy[i+3] + da*dx[i+3];
+        -:  589:	}
+        -:  590:#endif
+        -:  591:}
+        -:  592:
+        -:  593:/*----------------------*/
+        -:  594:
+    #####:  595:REAL ddot(n,dx,incx,dy,incy)
+        -:  596:/*
+        -:  597:     forms the dot product of two vectors.
+        -:  598:     jack dongarra, linpack, 3/11/78.
+        -:  599:*/
+        -:  600:REAL dx[],dy[];
+        -:  601:
+        -:  602:int incx,incy,n;
+        -:  603:{
+        -:  604:	REAL dtemp;
+        -:  605:	int i,ix,iy,m,mp1;
+        -:  606:
+        -:  607:	dtemp = ZERO;
+        -:  608:
+    #####:  609:	if(n <= 0) return(ZERO);
+        -:  610:
+    #####:  611:	if(incx != 1 || incy != 1) {
+        -:  612:
+        -:  613:		/* code for unequal increments or equal increments
+        -:  614:		   not equal to 1					*/
+        -:  615:
+        -:  616:		ix = 0;
+        -:  617:		iy = 0;
+    #####:  618:		if (incx < 0) ix = (-n+1)*incx;
+    #####:  619:		if (incy < 0) iy = (-n+1)*incy;
+    #####:  620:		for (i = 0;i < n; i++) {
+    #####:  621:			dtemp = dtemp + dx[ix]*dy[iy];
+    #####:  622:			ix = ix + incx;
+    #####:  623:			iy = iy + incy;
+        -:  624:		}
+        -:  625:		return(dtemp);
+        -:  626:	}
+        -:  627:
+        -:  628:	/* code for both increments equal to 1 */
+        -:  629:
+        -:  630:#ifdef ROLL
+    #####:  631:	for (i=0;i < n; i++)
+    #####:  632:		dtemp = dtemp + dx[i]*dy[i];
+        -:  633:	return(dtemp);
+        -:  634:#endif
+        -:  635:#ifdef UNROLL
+        -:  636:
+        -:  637:	m = n % 5;
+        -:  638:	if (m != 0) {
+        -:  639:		for (i = 0; i < m; i++)
+        -:  640:			dtemp = dtemp + dx[i]*dy[i];
+        -:  641:		if (n < 5) return(dtemp);
+        -:  642:	}
+        -:  643:	for (i = m; i < n; i = i + 5) {
+        -:  644:		dtemp = dtemp + dx[i]*dy[i] +
+        -:  645:		dx[i+1]*dy[i+1] + dx[i+2]*dy[i+2] +
+        -:  646:		dx[i+3]*dy[i+3] + dx[i+4]*dy[i+4];
+        -:  647:	}
+        -:  648:	return(dtemp);
+        -:  649:#endif
+        -:  650:}
+        -:  651:
+        -:  652:/*----------------------*/
+    20394:  653:dscal(n,da,dx,incx)
+        -:  654:
+        -:  655:/*     scales a vector by a constant.
+        -:  656:      jack dongarra, linpack, 3/11/78.
+        -:  657:*/
+        -:  658:REAL da,dx[];
+        -:  659:int n, incx;
+        -:  660:{
+        -:  661:	int i,m,mp1,nincx;
+        -:  662:
+    20394:  663:	if(n <= 0)return;
+    20394:  664:	if(incx != 1) {
+        -:  665:
+        -:  666:		/* code for increment not equal to 1 */
+        -:  667:
+    #####:  668:		nincx = n*incx;
+    #####:  669:		for (i = 0; i < nincx; i = i + incx)
+    #####:  670:			dx[i] = da*dx[i];
+        -:  671:		return;
+        -:  672:	}
+        -:  673:
+        -:  674:	/* code for increment equal to 1 */
+        -:  675:
+        -:  676:#ifdef ROLL
+  1019700:  677:	for (i = 0; i < n; i++)
+  1019700:  678:		dx[i] = da*dx[i];
+        -:  679:#endif
+        -:  680:#ifdef UNROLL
+        -:  681:
+        -:  682:	m = n % 5;
+        -:  683:	if (m != 0) {
+        -:  684:		for (i = 0; i < m; i++)
+        -:  685:			dx[i] = da*dx[i];
+        -:  686:		if (n < 5) return;
+        -:  687:	}
+        -:  688:	for (i = m; i < n; i = i + 5){
+        -:  689:		dx[i] = da*dx[i];
+        -:  690:		dx[i+1] = da*dx[i+1];
+        -:  691:		dx[i+2] = da*dx[i+2];
+        -:  692:		dx[i+3] = da*dx[i+3];
+        -:  693:		dx[i+4] = da*dx[i+4];
+        -:  694:	}
+        -:  695:#endif
+        -:  696:
+        -:  697:}
+        -:  698:
+        -:  699:/*----------------------*/
+    20394:  700:int idamax(n,dx,incx)
+        -:  701:
+        -:  702:/*
+        -:  703:     finds the index of element having max. absolute value.
+        -:  704:     jack dongarra, linpack, 3/11/78.
+        -:  705:*/
+        -:  706:
+        -:  707:REAL dx[];
+        -:  708:int incx,n;
+        -:  709:{
+        -:  710:	REAL dmax;
+        -:  711:	int i, ix, itemp;
+        -:  712:
+    20394:  713:	if( n < 1 ) return(-1);
+    20394:  714:	if(n ==1 ) return(0);
+    20394:  715:	if(incx != 1) {
+        -:  716:
+        -:  717:		/* code for increment not equal to 1 */
+        -:  718:
+        -:  719:		ix = 0;
+    #####:  720:		dmax = fabs((double)dx[0]);
+        -:  721:		ix = ix + incx;
+    #####:  722:		for (i = 1; i < n; i++) {
+    #####:  723:			if(fabs((double)dx[ix]) > dmax)  {
+        -:  724:				itemp = i;
+        -:  725:				dmax = fabs((double)dx[ix]);
+        -:  726:			}
+    #####:  727:			ix = ix + incx;
+        -:  728:		}
+        -:  729:	}
+        -:  730:	else {
+        -:  731:
+        -:  732:		/* code for increment equal to 1 */
+        -:  733:
+        -:  734:		itemp = 0;
+    20394:  735:		dmax = fabs((double)dx[0]);
+  1040094:  736:		for (i = 1; i < n; i++) {
+  1019700:  737:			if(fabs((double)dx[i]) > dmax) {
+        -:  738:				itemp = i;
+        -:  739:				dmax = fabs((double)dx[i]);
+        -:  740:			}
+        -:  741:		}
+        -:  742:	}
+    20394:  743:	return (itemp);
+        -:  744:}
+        -:  745:
+        -:  746:/*----------------------*/
+    #####:  747:REAL epslon (x)
+        -:  748:REAL x;
+        -:  749:/*
+        -:  750:     estimate unit roundoff in quantities of size x.
+        -:  751:*/
+        -:  752:
+        -:  753:{
+        -:  754:	REAL a,b,c,eps;
+        -:  755:/*
+        -:  756:     this program should function properly on all systems
+        -:  757:     satisfying the following two assumptions,
+        -:  758:        1.  the base used in representing dfloating point
+        -:  759:            numbers is not a power of three.
+        -:  760:        2.  the quantity  a  in statement 10 is represented to
+        -:  761:            the accuracy used in dfloating point variables
+        -:  762:            that are stored in memory.
+        -:  763:     the statement number 10 and the go to 10 are intended to
+        -:  764:     force optimizing compilers to generate code satisfying
+        -:  765:     assumption 2.
+        -:  766:     under these assumptions, it should be true that,
+        -:  767:            a  is not exactly equal to four-thirds,
+        -:  768:            b  has a zero for its last bit or digit,
+        -:  769:            c  is not exactly equal to one,
+        -:  770:            eps  measures the separation of 1.0 from
+        -:  771:                 the next larger dfloating point number.
+        -:  772:     the developers of eispack would appreciate being informed
+        -:  773:     about any systems where these assumptions do not hold.
+        -:  774:
+        -:  775:     *****************************************************************
+        -:  776:     this routine is one of the auxiliary routines used by eispack iii
+        -:  777:     to avoid machine dependencies.
+        -:  778:     *****************************************************************
+        -:  779:
+        -:  780:     this version dated 4/6/83.
+        -:  781:*/
+        -:  782:
+        -:  783:	a = 4.0e0/3.0e0;
+        -:  784:	eps = ZERO;
+        2:  785:	while (eps == ZERO) {
+        -:  786:		b = a - ONE;
+        -:  787:		c = b + b + b;
+        -:  788:		eps = fabs((double)(c-ONE));
+        -:  789:	}
+    #####:  790:	return(eps*fabs((double)x));
+        -:  791:}
+        -:  792:
+        -:  793:/*----------------------*/
+        1:  794:dmxpy (n1, y, n2, ldm, x, m)
+        -:  795:REAL y[], x[], m[];
+        -:  796:int n1, n2, ldm;
+        -:  797:
+        -:  798:/* We would like to declare m[][ldm], but c does not allow it.  In this
+        -:  799:function, references to m[i][j] are written m[ldm*i+j].  */
+        -:  800:
+        -:  801:/*
+        -:  802:   purpose:
+        -:  803:     multiply matrix m times vector x and add the result to vector y.
+        -:  804:
+        -:  805:   parameters:
+        -:  806:
+        -:  807:     n1 integer, number of elements in vector y, and number of rows in
+        -:  808:         matrix m
+        -:  809:
+        -:  810:     y double [n1], vector of length n1 to which is added
+        -:  811:         the product m*x
+        -:  812:
+        -:  813:     n2 integer, number of elements in vector x, and number of columns
+        -:  814:         in matrix m
+        -:  815:
+        -:  816:     ldm integer, leading dimension of array m
+        -:  817:
+        -:  818:     x double [n2], vector of length n2
+        -:  819:
+        -:  820:     m double [ldm][n2], matrix of n1 rows and n2 columns
+        -:  821:
+        -:  822: ----------------------------------------------------------------------
+        -:  823:*/
+        -:  824:{
+        -:  825:
+        -:  826:
+        -:  827:
+        -:  828:
+        -:  829:
+        -:  830:
+        -:  831:
+        -:  832:	#include <stdio.h>
+        -:  833:	#include <stdlib.h>
+        -:  834:
+        -:  835:	#include <e-hal.h>  // Epiphany Hardware Abstraction Layer
+        -:  836:	                    // functionality for communicating with epiphany chip when
+        -:  837:	                    // the application runs on a host, typically the ARM µp
+        -:  838:
+        -:  839:	#define BUFOFFSET (0x01000000)  // SDRAM is at 0x8f00'0000,
+        -:  840:	                                // offset in e_read starts at 0x8e00'0000
+        -:  841:																	// so 0x8e00'0000 + 0x0100'0000 = 0x8f00'0000
+        -:  842:
+        -:  843:		#define LOCKED (0)
+        -:  844:		#define UNLOCKED (1)
+        -:  845:
+        -:  846:		unsigned rows, cols, i, j, ncores, status;
+        -:  847:
+        -:  848:	  e_platform_t platform;  // platform infos
+        -:  849:	  e_epiphany_t dev;       // provides access to cores workgroup
+        -:  850:
+        -:  851:		// Memory buffer
+        -:  852:		e_mem_t shared_result;
+        -:  853:	  e_mem_t sharedx;
+        -:  854:	  e_mem_t sharedy;
+        -:  855:		e_mem_t sharedm;
+        -:  856:		e_mem_t shared_status;
+        -:  857:
+        1:  858:	  e_init(NULL);
+        1:  859:	  e_reset_system();
+        1:  860:	  e_get_platform_info(&platform);
+        -:  861:
+        1:  862:	  rows = platform.rows;
+        1:  863:	  cols = platform.cols;
+        1:  864:	  ncores = rows * cols;
+        1:  865:		float result[ncores];
+        -:  866:		int statuses[ncores];
+        -:  867:
+        -:  868:		// Allocate memory buffers
+        1:  869:	  e_alloc(&shared_result, BUFOFFSET, ncores*sizeof(float));
+        1:  870:	  e_alloc(&sharedx, BUFOFFSET + ncores*sizeof(float), 200*sizeof(float));
+        1:  871:	  e_alloc(&sharedy, BUFOFFSET + ncores*sizeof(float) + 200*sizeof(float), 200*sizeof(float));
+        1:  872:		e_alloc(&sharedm, BUFOFFSET + ncores*sizeof(float) + 200*sizeof(float) + 200*sizeof(float), 200*201*sizeof(float));
+        1:  873:		e_alloc(&shared_status, BUFOFFSET + ncores*sizeof(float) + 200*sizeof(float) + 200*sizeof(float) + 200*201*sizeof(float), ncores*sizeof(int));
+        -:  874:		// Total of ~163 KB
+        -:  875:
+        -:  876:	  // Write x and y to shared memory buffers
+        1:  877:		status = e_write(&sharedy, 0, 0, 0x0, x, 200*sizeof(float));
+        -:  878:		printf("[info] Status of sharedy writing: %i\n", status);
+        1:  879:	  status = e_write(&sharedx, 0, 0, 0x0, y, 200*sizeof(float));
+        -:  880:	  printf("[info] Status of sharedx writing: %i\n", status);
+        1:  881:		status = e_write(&sharedm, 0, 0, 0x0, m, 200*201*sizeof(float));
+        -:  882:		printf("[info] Status of sharedm writing: %i\n", status);
+        -:  883:
+        -:  884:		// Create workgroup of eCores
+        1:  885:	  e_open(&dev, 0, 0, rows, cols);
+        -:  886:
+        -:  887:		// Load program to eCores
+        5:  888:	  for(i=0; i<rows; i++) {
+       20:  889:	    for(j=0; j<cols; j++) {
+       16:  890:	      e_load("emain.srec", &dev, i, j, E_FALSE);
+       16:  891:	      e_start(&dev, i, j);
+        -:  892:	    }
+        -:  893:	  }
+        -:  894:
+        -:  895:	int locked = LOCKED;
+        1:  896:	int unlocked = UNLOCKED;
+        -:  897:	int eCoreStatus;
+        -:  898:
+        -:  899:	// unsigned looper = 0;
+        -:  900:	// while(1) {
+        -:  901:	// 	// Read eCore statuses
+        -:  902:	// 	e_read(&shared_status, 0, 0, 0x4*looper, &eCoreStatus, sizeof(int));
+        -:  903:	// 	// Is eCore Locked ?
+        -:  904:	// 	if( eCoreStatus == LOCKED ) {
+        -:  905:	// 		// Give eCore instructions
+        -:  906:	// 		//...
+        -:  907:	// 		// Set eCore to UNLOCKED
+        -:  908:	// 		e_write(&shared_status, 0, 0, 0x4*looper, &unlocked, sizeof(int));
+        -:  909:	// 		// Can go to next iteration
+        -:  910:	// 		break;
+        -:  911:	// 	}
+        -:  912:	// 	looper = (looper+1)%ncores;
+        -:  913:	// }
+        -:  914:
+        -:  915:	int jmin;
+        -:  916:	/* cleanup odd vector */
+        -:  917:
+        1:  918:	j = n2 % 2;
+        1:  919:	if (j >= 1) {
+    #####:  920:		j = j - 1;
+    #####:  921:		for (i = 0; i < n1; i++) {
+    #####:  922:			y[i] = (y[i]) + x[j]*m[ldm*j+i];
+        -:  923:		}
+        -:  924:	}
+        -:  925:
+        -:  926:	/* cleanup odd group of two vectors */
+        -:  927:
+        1:  928:	j = n2 % 4;
+        1:  929:	if (j >= 2) {
+    #####:  930:		j = j - 1;
+    #####:  931:		for (i = 0; i < n1; i++)
+    #####:  932:            		y[i] = ( (y[i])
+    #####:  933:                  	       + x[j-1]*m[ldm*(j-1)+i]) + x[j]*m[ldm*j+i];
+        -:  934:	}
+        -:  935:
+        -:  936:	/* cleanup odd group of four vectors */
+        -:  937:
+        1:  938:	j = n2 % 8;
+        1:  939:	if (j >= 4) {
+        1:  940:		j = j - 1;
+      101:  941:		for (i = 0; i < n1; i++)
+      200:  942:			y[i] = ((( (y[i])
+      100:  943:			       + x[j-3]*m[ldm*(j-3)+i])
+      100:  944:			       + x[j-2]*m[ldm*(j-2)+i])
+      100:  945:			       + x[j-1]*m[ldm*(j-1)+i]) + x[j]*m[ldm*j+i];
+        -:  946:	}
+        -:  947:
+        -:  948:	/* cleanup odd group of eight vectors */
+        -:  949:
+        1:  950:	j = n2 % 16;
+        1:  951:	if (j >= 8) {
+    #####:  952:		j = j - 1;
+    #####:  953:		for (i = 0; i < n1; i++)
+    #####:  954:			y[i] = ((((((( (y[i])
+    #####:  955:			       + x[j-7]*m[ldm*(j-7)+i]) + x[j-6]*m[ldm*(j-6)+i])
+    #####:  956:		  	       + x[j-5]*m[ldm*(j-5)+i]) + x[j-4]*m[ldm*(j-4)+i])
+    #####:  957:			       + x[j-3]*m[ldm*(j-3)+i]) + x[j-2]*m[ldm*(j-2)+i])
+    #####:  958:			       + x[j-1]*m[ldm*(j-1)+i]) + x[j]  *m[ldm*j+i];
+        -:  959:	}
+        -:  960:
+        -:  961:	/* main loop - groups of sixteen vectors */
+        -:  962:
+        -:  963:	jmin = (n2%16)+16;
+        7:  964:	for (j = jmin-1; j < n2; j = j + 16) {
+     1212:  965:		for (i = 0; i < n1; i++) {
+        -:  966:
+        -:  967:
+        -:  968:
+        -:  969:			unsigned looper = 0;
+        -:  970:			while(1) {
+        -:  971:				// Read eCore statuses
+     3567:  972:				e_read(&shared_status, 0, 0, 0x4*looper, &eCoreStatus, sizeof(int));
+        -:  973:				// Is eCore Locked ?
+     3567:  974:				if( eCoreStatus == LOCKED ) {
+        -:  975:					//printf("eCore locked found at %i,%i\n",looper/rows,looper%cols);
+        -:  976:					// Give eCore instructions
+      600:  977:					e_write(&dev, looper/rows, looper%cols, 0x4*looper, &i, sizeof(int));
+      600:  978:					e_write(&dev, looper/rows, looper%cols, 0x4*(looper+1), &j, sizeof(int));
+      600:  979:					e_write(&dev, looper/rows, looper%cols, 0x4*(looper+2), &ldm, sizeof(int));
+        -:  980:					// Set eCore to UNLOCKED
+      600:  981:					e_write(&shared_status, 0, 0, 0x4*looper, &unlocked, sizeof(int));
+        -:  982:					// Can go to next iteration
+        -:  983:					break;
+        -:  984:				}
+     2967:  985:				looper = (looper+1)%ncores;
+     2967:  986:			}
+        -:  987:
+        -:  988:
+        -:  989:
+        -:  990:		}
+        -:  991:	}
+        -:  992:
+        -:  993:
+        -:  994:	// // Read result buffer
+        -:  995:	// e_read(&shared_result, 0, 0, 0x0, &result, ncores * sizeof(float)); // reads what's ben put in buffer
+        -:  996:	//
+        -:  997:	// // Print result
+        -:  998:	// for(i = 0; i < ncores; i++)
+        -:  999:	// 	printf("Result from core n°%02i is %f\n",i, result[i]);
+        -: 1000:
+        -: 1001:
+        1: 1002:}
+        -: 1003:
+        -: 1004:/*----------------------*/
+      432: 1005:REAL second()
+        -: 1006:{
+        -: 1007:	#include <sys/time.h>
+        -: 1008:	#include <sys/resource.h>
+        -: 1009:
+        -: 1010:	struct rusage ru;
+        -: 1011:	REAL t ;
+        -: 1012:	//
+        -: 1013:	//void getrusage();
+        -: 1014:	//
+      432: 1015:	getrusage(RUSAGE_SELF,&ru) ;
+        -: 1016:
+      864: 1017:	t = (REAL) (ru.ru_utime.tv_sec+ru.ru_stime.tv_sec) +
+      432: 1018:	    ((REAL) (ru.ru_utime.tv_usec+ru.ru_stime.tv_usec))/1.0e6 ;
+      432: 1019:	 return t ;
+        -: 1020:}
