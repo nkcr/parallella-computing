@@ -39,7 +39,7 @@ Rolled Single Precision Linpack
        0.01       0.00       0.01      68666       0.03       0.18
        0.00       0.00       0.00        inf       0.00       0.00
        0.01       0.00       0.01     112568       0.02       0.11
-Rolled Single  Precision 112568 Kflops ; 100 Reps 
+Rolled Single  Precision 112568 Kflops ; 100 Reps
 ```
 
 http://www.netlib.org/utk/people/JackDongarra/faq-linpack.html#_Toc27885709
@@ -54,3 +54,12 @@ a file `gmon.out`. Convert that file to statistics with `gprof clinpack.elf gmon
 Add `-fprofile-arcs -ftest-coverage` as compilation params and change `-04` to `-0s.
 Compile and run. Then run `gcov clinpack.c` the file `clinpack.c.gcov` is generated.
 That file contains number of executions of each lines.
+
+**Error putting it directly on the epiphany**
+```
+parallella@parallella:~/parallella-computing/benchmark$ ./build.sh/opt/adapteva/
+esdk.2015.1/tools/e-gnu.armv7l/bin/../lib/gcc/epiphany-elf/4.8.2/../../../../
+epiphany-elf/bin/ld: clinpack.elf section `.bss' will not fit in region `INTERNAL_RAM'
+opt/adapteva/esdk.2015.1/tools/e-gnu.armv7l/bin/../lib/gcc/epiphany-elf/4.8.2/
+../../../../epiphany-elf/bin/ld: region `INTERNAL_RAM' overflowed by 318544 bytes
+```
