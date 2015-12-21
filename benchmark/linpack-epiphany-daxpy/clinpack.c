@@ -66,6 +66,8 @@ unsigned rows, cols, ncores;
 e_platform_t platform;
 e_epiphany_t dev;
 
+unsigned nkiteration = 0;
+
 // Memory buffer
 e_mem_t shared_result;
 e_mem_t shareddy;
@@ -656,7 +658,7 @@ status = e_write(&shareddx, 0, 0, 0x0, dx, n*sizeof(REAL));
 
 printf("n = %d\n", n);
 
-
+nkiteration++;
 
 	// legacy ------------------
 	for (i = 0;i < n; i++) {
@@ -669,10 +671,10 @@ printf("n = %d\n", n);
 		dy[i] = dy[i] + da*dx[i];
 		unsigned looper = 0;
 		while(1) {
-      printf("looper = %i\n", looper);
+      // printf("looper = %i\n", looper);
 			// Read eCore statuses
 			e_read(&shared_status, 0, 0, 0x4*looper, &eCoreStatus, sizeof(int));
-      printf("status = %i\n", eCoreStatus);
+      printf("looper = %i, status = %i, iteration = %i\n", looper, eCoreStatus, nkiteration);
 			// Is eCore Locked ?
 			if( eCoreStatus == LOCKED ) {
 				// printf("eCore locked found at %i,%i\n",looper/rows,looper%cols);
