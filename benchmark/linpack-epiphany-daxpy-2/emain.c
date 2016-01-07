@@ -5,8 +5,8 @@
 
 #include <e-lib.h> // Epiphany cores library
 
-#define FREE (0)
-#define BUSY (1)
+#define EFREE (0)
+#define EBUSY (1)
 
 struct Instructions {
   int i;
@@ -31,10 +31,10 @@ int main(void) {
   sharedda = (volatile float *) (0x8f000000 + 16*sizeof(float) + 100*sizeof(float));
   shareddx = (volatile float *) (0x8f000000 + 16*sizeof(float) + 100*sizeof(float) + sizeof(float));
   shared_status = (volatile int *) (0x8f000000 + 16*sizeof(float) + 100*sizeof(float) + sizeof(float) + 100*sizeof(float) + 0x4*num);
-  *shared_status = FREE;
+  *shared_status = EFREE;
   while(1) {
     // Read current status, locked?
-    while(*shared_status == FREE);
+    while(*shared_status == EFREE);
     // Compute given instructions
     int i = instructions.i;
 
@@ -42,6 +42,6 @@ int main(void) {
     // e_wait(E_CTIMER_0, 900000);
     // *result = sharedy[i];
     // Set status to locked
-    *shared_status = FREE;
+    *shared_status = EFREE;
   }
 }

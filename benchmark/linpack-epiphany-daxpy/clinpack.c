@@ -675,6 +675,7 @@ nkiteration++;
 			// Read eCore statuses
 			e_read(&shared_status, 0, 0, 0x4*looper, &eCoreStatus, sizeof(int));
       printf("looper = %i, status = %i, iteration = %i\n", looper, eCoreStatus, nkiteration);
+      // system("temp");
 			// Is eCore Locked ?
 			if( eCoreStatus == LOCKED ) {
 				// printf("eCore locked found at %i,%i\n",looper/rows,looper%cols);
@@ -686,6 +687,9 @@ nkiteration++;
         printf("new status = %i\n", eCoreStatus);
 				// Can go to next iteration
 				break;
+			} else {
+				system("temp");
+				exit(0);
 			}
 			looper = (looper+1)%ncores;
 		}
