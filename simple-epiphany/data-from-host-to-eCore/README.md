@@ -1,4 +1,4 @@
-This example uses a shared buffer to send data to every eCores, or uses local eCores' memory to send data to single eCores.
+This example uses local eCores' memory to send data to single eCores.
 
 to run :
 `./build.sh && ./main.elf`
