@@ -1,5 +1,5 @@
 Each core saves it's id in it's local memory. Then it writes a ready status, waits for it's neighbor to be ready, then read it's
-neighbor id. Finally writes the result in shared memory. The host then prints the result.
+neighbor id. Finally writes the result in shared memory. The host then prints the result. Data transfert are performed with DMA.
 
 to run :
 ```
