@@ -1,5 +1,4 @@
-The host activates the eCore. The eCore wait for a local variable to be changed
-the host can select which eCore to activate setting the eCore local variable.
+This example uses a shared buffer to send data to every eCores, or uses local eCores' memory to send data to single eCores.
 
 to run :
 `./build.sh && ./main.elf`
