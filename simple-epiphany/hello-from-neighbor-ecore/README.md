@@ -1,7 +1,7 @@
 Each core saves it's id in it's local memory. Then it writes a ready status, waits for it's neighbor to be ready, then read it's
 neighbor id. Finally writes the result in shared memory. The host then prints the result. 
 
-Uses `e_write` and `e_read` to perform data transfert.
+Uses `e_write` and `e_read` to perform data transferts.
 
 to run :
 ```
