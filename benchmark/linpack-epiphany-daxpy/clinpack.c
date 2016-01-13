@@ -637,6 +637,11 @@ int incx,incy,n;
 
 #ifdef ROLL
 
+/* Original
+for (i = 0;i < n; i++) {
+  dy[i] = dy[i] + da*dx[i];
+}
+*/
 
 // #############################################################################
 // EPIPHANY ####################################################################
@@ -648,17 +653,18 @@ int incx,incy,n;
 // (int) i
 
 unsigned status;
-// Write x and y to shared memory buffers
-status = e_write(&shareddy,  0, 0, 0x0, dy, n*sizeof(REAL));
-// printf("[info] Status of shareddy writing: %i\n", status);
-status = e_write(&sharedda, 0, 0, 0x0, &da,   sizeof(REAL));
-// printf("[info] Status of sharedda writing: %i\n", status);
-status = e_write(&shareddx, 0, 0, 0x0, dx, n*sizeof(REAL));
-// printf("[info] Status of shareddx writing: %i\n", status);
+// // Write x and y to shared memory buffers
+// status = e_write(&shareddy,  0, 0, 0x0, dy, n*sizeof(REAL));
+// // printf("[info] Status of shareddy writing: %i\n", status);
+// status = e_write(&sharedda, 0, 0, 0x0, &da,   sizeof(REAL));
+// // printf("[info] Status of sharedda writing: %i\n", status);
+// status = e_write(&shareddx, 0, 0, 0x0, dx, n*sizeof(REAL));
+// // printf("[info] Status of shareddx writing: %i\n", status);
 
-printf("n = %d\n", n);
+// printf("n = %d\n", n);
 
 nkiteration++;
+unsigned looper = 0;
 
 	// legacy ------------------
 	for (i = 0;i < n; i++) {
@@ -668,36 +674,32 @@ nkiteration++;
 
 
 
-		dy[i] = dy[i] + da*dx[i];
-		unsigned looper = 0;
-		while(1) {
-      // printf("looper = %i\n", looper);
-			// Read eCore statuses
-			e_read(&shared_status, 0, 0, 0x4*looper, &eCoreStatus, sizeof(int));
-      printf("looper = %i, status = %i, iteration = %i\n", looper, eCoreStatus, nkiteration);
-      // system("temp");
-			// Is eCore Locked ?
-			if( eCoreStatus == LOCKED ) {
-				// printf("eCore locked found at %i,%i\n",looper/rows,looper%cols);
-				// Give eCore instructions
-				// e_write(&dev, looper/rows, looper%cols, 0x4000, &i, sizeof(int)); // Makes program not responding
-				// Set eCore to UNLOCKED
-				e_write(&shared_status, 0, 0, 0x4*looper, &unlocked, sizeof(int));
-        e_read(&shared_status, 0, 0, 0x4*looper, &eCoreStatus, sizeof(int));
-        printf("new status = %i\n", eCoreStatus);
-				// Can go to next iteration
-				break;
-			} else {
-				system("temp");
-				exit(0);
-			}
-			looper = (looper+1)%ncores;
-		}
+		//dy[i] = dy[i] + da*dx[i];
+		// while(1) {
+    //   // printf("looper = %i\n", looper);
+		// 	// Read eCore statuses
+		// 	e_read(&shared_status, 0, 0, 0x4*looper, &eCoreStatus, sizeof(int));
+    //   // printf("looper = %i, status = %i, iteration = %i\n", looper, eCoreStatus, nkiteration);
+    //   // system("temp");
+		// 	// Is eCore Locked ?
+		// 	if( eCoreStatus == LOCKED ) {
+		// 		// printf("eCore locked found at %i,%i\n",looper/rows,looper%cols);
+		// 		// Give eCore instructions
+		// 		e_write(&dev, looper/rows, looper%cols, 0x4000, &i, sizeof(int));
+		// 		// Set eCore to UNLOCKED
+		// 		e_write(&shared_status, 0, 0, 0x4*looper, &unlocked, sizeof(int));
+		// 		// Can go to next iteration
+		// 		break;
+		// 	}
+		// 	looper = (looper+1)%ncores;
+		// }
 
 
 
 
 	}
+
+  //e_read(&shareddy, 0, 0, 0, dy, n*sizeof(REAL));
 
 // e_free(&shared_result);
 // e_free(&shareddy);

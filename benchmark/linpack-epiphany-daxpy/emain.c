@@ -40,7 +40,7 @@ int main(void) {
 
     shareddy[i] = shareddy[i] + (*sharedda) * shareddx[i];
     // e_wait(E_CTIMER_0, 900000);
-    // *result = sharedy[i];
+    *result = shareddy[i];
     // Set status to locked
     *shared_status = LOCKED;
   }
