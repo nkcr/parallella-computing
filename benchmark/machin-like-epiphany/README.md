@@ -1,7 +1,7 @@
 This program aims to compute machin-like approximation of pi and measure
 performance between host only implementation and host with epiphany implementation.
 
-This example only uses host and epiphany. To print in a stat way, provide `-D STAT`.
+This example only uses host and epiphany. To print csv data, provide `-D STAT`.
 
 to run
 

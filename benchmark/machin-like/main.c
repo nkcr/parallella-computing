@@ -45,7 +45,7 @@ int main(int argc, char * argv[]) {
   float end_t   = second();
   float spent_t = end_t - start_t;
   #ifdef STAT
-    printf("(%i,%i,%f)\n", main_iteration, sub_iteration, spent_t);
+    printf("%i,\t%i,\t%f, \t%f\n", main_iteration, sub_iteration, spent_t, res);
   #else
     printf("PI = %f\ttime spent %fs\n", res, spent_t);
   #endif
