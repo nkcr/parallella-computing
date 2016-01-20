@@ -40,12 +40,6 @@ The first script (stats.sh) takes no parameter and produces data in rows :
 
 And will produce output `stats.csv`.
 
-The second script (stats_chunck.sh) produces data in a progressiv way along rows and cols of a square. It takes as parameter the start and the end of the portion :
-
-`./stats_chunck.sh 31 50`
-
-And will produce a file output `stats_chunck_31_50.csv`.
-
 #### Tips
 
 Tips to run on different screen, type `screen` to start a new session. Then
