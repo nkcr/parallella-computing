@@ -10,9 +10,11 @@
 #define BUFOFFSET (0x01000000) // SDRAM offset for shared buffers
 #define MAIN_ITERATION 10000   // Default number of main iterations
 #define SUB_ITERATION  1000    // Default number of sub iterations
+#define NB_CORES       16      // Default numner of eCores
 
 static unsigned main_iteration = MAIN_ITERATION;
 static unsigned sub_iteration  = SUB_ITERATION;
+static unsigned nb_cores       = NB_CORES;
 
 float f(unsigned x);
 float second();
@@ -24,11 +26,12 @@ int main(int argc, char * argv[]) {
 
   // Arguments handling
   switch(argc) {
+    case 4: nb_cores       = atoi(argv[3]);
     case 3: sub_iteration  = atoi(argv[2]);
     case 2: main_iteration = atoi(argv[1]);
     case 1: break;
     default:
-      printf("Wrong number of args\nUsage: ./main.elf [main iterations] [sub iteration]\n");
+      printf("Wrong number of args\nUsage: ./main.elf [main iterations] [sub iteration] [nb cores]\n");
       return 0;
   }
 
@@ -42,7 +45,7 @@ int main(int argc, char * argv[]) {
   e_load_group("emain.srec", &dev, 0, 0, 4, 4, E_FALSE); // don't start immediately
   e_start_group(&dev); // Start workgroup
 
-  unsigned ncores = 16;
+  unsigned ncores = nb_cores; if(ncores>16) exit(0);
   unsigned k;
   for(k = 0; k < ncores; k++) {
     e_write(&dev, k/4, k%4, 0x400c, &sub_iteration, sizeof(unsigned));
