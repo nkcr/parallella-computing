@@ -1,0 +1,122 @@
+% !TEX encoding = UTF-8 Unicode
+\include{header}
+\include{glossary}
+
+\begin{document}
+
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+  basicstyle=\footnotesize,
+}
+
+\lstdefinestyle{customasm}{
+  belowcaptionskip=1\baselineskip,
+  frame=L,
+  xleftmargin=\parindent,
+  language=[x86masm]Assembler,
+  basicstyle=\footnotesize\ttfamily,
+  commentstyle=\itshape\color{purple!40!black},
+}
+
+\lstdefinestyle{custombash}{
+  belowcaptionskip=1\baselineskip,
+  frame=L,
+  xleftmargin=\parindent,
+  language=bash,
+  basicstyle=\footnotesize\ttfamily,
+}
+
+\def\myTitle{Parallella computing: another distributed system story}
+\def\myName{Noémien Kocher}
+\def\myUni{University of Applied Sciences of Western Switzerland}
+\def\myDepartment{Department of computer science}
+\def\mySupervisors{Baltensperger Richard, Kuonen Pierre, Roche Jean-Fran\c cois, Gon\c calves Louren\c co Marco Jos\'e}
+
+\lstset{escapechar=@,style=customc}
+
+\begin{titlepage}
+    \begin{center}
+        \large
+
+        \hfill
+
+        \vfill
+
+        \begingroup
+            \MakeUppercase{\myTitle} \\ \bigskip
+        \endgroup
+
+        \textsc{\myName}
+
+        \vfill
+
+        %\includegraphics[width=6cm]{gfx/TFZsuperellipse_bw} \\ \medskip
+
+        %\mySubtitle \\ \medskip
+        {\footnotesize A semester project} \\ \bigskip
+        %\myDegree \\
+        \myDepartment \\
+        %\myFaculty \\
+        %\vspace{1em}
+        \myUni \\ %\bigskip
+        {\footnotesize Fribourg, Switzerland}
+
+        \vfill
+
+        %\hfill
+        {\footnotesize \textcopyright\ January 2016 \myName} \\ \bigskip
+        {\footnotesize Supervisors: \mySupervisors}
+    \end{center}
+\end{titlepage}
+
+\begin{abstract}
+
+The last decade has seen a huge rise in processing power demand. Since single systems are limited and hardly scalable, we look at distributed systems to cope this rising need of high performance computing. Parallella is the first distributed system using the \gls{epiphany} architecture. It has been designed to be energy efficient and scalable to thousands of cores, responding to high processing needs. The \gls{epiphany} architecture consist of a 2D mesh network of cores, programmable in plain C/C++. Despite its interesting features, it has not yet gained a major attraction and it is still in a growing stage. This paper is cut into four chapters. The first one (\textit{Exploration}) aims at discovering what the Parallella is capable of, by exploring its functionalities. In the second chapter (\textit{In deep}), some examples will be discussed, and the third chapter (\textit{A practical example}) will analyze some real-life applications using its potential. The last chapter (\textit{Final thoughts}) stands for the conclusion and further work.
+
+\smallskip
+\noindent \textbf{Keywords.} Parallella, \gls{epiphany}, distributed system, benchmark
+
+\end{abstract}
+
+\printglossaries
+
+\tableofcontents
+\listoffigures
+
+\chapter{Exploration}
+\input{chapters/chapter1}
+
+\chapter{In deep}
+\input{chapters/chapter2}
+
+\chapter{A practical example}
+\input{chapters/chapter3}
+
+\chapter{Final thoughts}
+\input{chapters/chapter4}
+
+\printbibliography
+
+\chapter*{Declaration of Authorship}
+\input{chapters/chapter5}
+
+\appendix
+\chapter{Source code structure}
+\input{chapters/appendix}
+
+\chapter{Versions used}
+\input{chapters/appendix2}
+
+\end{document}
+
+% https://www.sharelatex.com/blog/2013/08/02/thesis-series-pt1.html

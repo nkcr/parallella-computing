@@ -1,0 +1,17 @@
+\section{Conclusion}
+
+We have seen an overview of the parallella architecture along with its main features, some practical examples and made some measures so as to study its potential. Although we didn't cover everything the parallella has to offer, we still can draw some conclusions.
+
+The parallella is still in a growing stage. Released in 2012, it has not much evolved since today and there is still work to be done. Documentation and tools provided by Adapteva suffer from a lack of updates. What we missed the most was a way to debug program hosted on the \gls{epiphany}. Even performing a simple output print wasn't possible, which made testing and debugging harder. Another missing feature would be an interrupt line between the host and the \gls{epiphany} side. Without it, we were forced to use polling so as to fetch information and states of the \gls{epiphany} from the host.
+
+The parallella is good only on specific cases. With its very limited memory and the cost of using shared memory, we saw that we couldn't adapt every concurrent program to the \gls{epiphany}. We had to consider the program size as well as the shared memory needed, as we saw it wasn't possible to adapt the clinpack implementation due to those restrictions. With the $\pi$ implementation, we saw that even with minimal transfers time, the program wasn't as fast as we would think. The reason was that the main advantage of the parallella is its mesh network of \glspl{eCore} providing high speed memory transfers, which we didn't use at all. Hence developing on the parallella asks sometimes to think differently so as to exploit all its potential.
+
+With its low price and low electricity consumption, the parallella has certainly a place on the market of distributed system. But without a strong toolchain, easy workflow and serious documentation, it will be impossible for Adapteva to find its place and gain adoption in a larger scope than only experimented embed system users.
+
+\section{Further work}
+
+It would be interesting to adapt the $\pi$ implementation using the mesh network of \glspl{eCore}. The idea would be to send from the host all the job once in a single \gls{eCore}, and then make \glspl{eCore} capable of spreading jobs among them using the mesh network. It should be the best way to exploit the capacities of the parallella.
+
+The parallella supports the Message Passing Interface (MPI), we didn't talk about it but it would certainly be worth exploring its potential on the parallella. For example by adapting the $\pi$ implementation with MPI.
+
+Last but not least, one of the main requirement of the parallella is to be scalable to thousands of cores. There is much to do with setting up and developing on a distributed architecture using many parallellas, either connected using ethernet or using GPIO (General Purpose Input Output). We could then be able to measure the speedup with more than sixteen cores.

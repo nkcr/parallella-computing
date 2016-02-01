@@ -1,0 +1,15 @@
+Sources involved with this projet can all be found at: 
+
+\begin{center}
+	\code{https://github.com/nkcr/parallella-computing}
+\end{center}
+
+It contains three folders:
+
+\textbf{Miscellaneous}: contains some tests to check deadlock on basic C operations. It was used to debug the linpack implementation.
+
+\textbf{benchmark}: contains the clinpack implementation in few versions. One is the host only and the others (containing \textit{\gls{epiphany}} in their name) are the implementations for the \gls{epiphany}. There is also the $\pi$ approximation using machin-like formula in two versions, one for the host and the other for the \gls{epiphany}. Inside of them there is scripts to run measures which generate cvs files, there is also the measures used for this paper.
+
+\textbf{simple-epiphany}: contains all the examples developed for the second chapter \textit{In Deep}. All the examples of memory transfers as well as a simple game of life reside in this folder.
+
+Each folder contains a README file which describes the content of it. Please note that some code was used to produce simple technological test and may not be properly maintained, this it is not the case of the $\pi$ implementation.
