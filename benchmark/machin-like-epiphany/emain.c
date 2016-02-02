@@ -4,7 +4,6 @@
  * Licence: MIT
  * Purpose:
  *   This code is run by each eCore, it computes part of the sum.
- *
  */
 
 #include <math.h>
