@@ -1,3 +1,11 @@
+/*
+ * Author: Noémien Kocher
+ * Date: january 2016
+ * Licence: MIT
+ * Purpose:
+ *   This code is run by each eCore, it computes part of the sum.
+ */
+
 #include <math.h>
 
 #include <e-lib.h> // Epiphany cores library

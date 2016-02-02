@@ -1,3 +1,11 @@
+/*
+ * Author: Noémien Kocher
+ * Date: january 2016
+ * Licence: MIT
+ * Purpose:
+ *   Computes an approximation of PI using machin-like formula.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

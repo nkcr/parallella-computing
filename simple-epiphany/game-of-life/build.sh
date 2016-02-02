@@ -7,9 +7,6 @@ ELIBS="-L ${ESDK}/tools/host/lib"
 EINCS="-I ${ESDK}/tools/host/include"
 ELDF=${ESDK}/bsps/current/internal.ldf
 
-# Create the binaries directory
-#mkdir -p bin/
-
 CROSS_PREFIX=
 case $(uname -p) in
 	arm*)

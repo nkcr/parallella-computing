@@ -1,3 +1,14 @@
+/*
+ * Author: Noémien Kocher
+ * Date: january 2016
+ * Licence: MIT
+ * Purpose:
+ *   Computes a game of life where each core is an independent cell.
+ *   The main program reads for a certain number of iterations the status of the
+ *   cells and displays it. Outputs at the end the number of iterations for each
+ *   cell (eCore) and the status of the sticky overflow flag.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -11,6 +22,7 @@
 #define GAME_ITERATIONS 100
 
 unsigned rows, cols, i, j, ncores, row, col;
+unsigned game_iteration = GAME_ITERATIONS;
 
 /*
  * Init the epiphany platform
@@ -40,6 +52,16 @@ init_workgroup(e_epiphany_t * dev) {
  * Main entry
  */
 int main(int argc, char * argv[]) {
+
+  // Arguments handling
+  switch(argc) {
+    case 2: game_iteration = atoi(argv[1]);
+    case 1: break;
+    default:
+      printf("Wrong number og arguments\nUsage: ./mail.elf [nb iterations]\n");
+      return 0;
+  }
+
   e_platform_t platform;  // platform infos
   e_epiphany_t dev;       // provides access to cores workgroup
   e_mem_t emem;           // shared memory buffer
@@ -60,7 +82,7 @@ int main(int argc, char * argv[]) {
 
   init_workgroup(&dev);
   // we read from the allocated space and store it to the result array
-  for(i = 0; i < GAME_ITERATIONS; i++) {
+  for(i = 0; i < game_iteration; i++) {
     usleep(1000);
     e_read(&emem, 0, 0, 0x0, &result, ncores * sizeof(char)); // reads what's ben put in buffer
     fprintf(stdout, "X\tX\tX\tX\tX\tX\n");
@@ -81,7 +103,7 @@ int main(int argc, char * argv[]) {
   // offset of ncores
   e_read(&emem, 0, 0, ncores, &iterations, ncores * sizeof(uint32_t) + ncores * sizeof(uint32_t));
   for(i = 0; i < ncores; i++) {
-    fprintf(stdout, "eCore %02i, iteration %i, iof %i\n", i, iterations[i],iterations[ncores+i]);
+    fprintf(stdout, "eCore %02i:\titeration %i,\tiof %i\n", i, iterations[i],iterations[ncores+i]);
   }
   e_close(&dev);
   return 0;

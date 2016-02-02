@@ -3,7 +3,8 @@ performance between host only implementation and host with epiphany implementati
 
 #### Running
 
-This example only uses host and epiphany. To print csv data, provide `-D STAT`.
+This example uses host and epiphany. To print csv data, provide `-D STAT` in the
+compilation stage.
 
 to run
 
@@ -17,6 +18,9 @@ number of iterations :
 ```
 ./main.elf [main number] [sub number]
 ```
+
+The sub number of iterations is the iterations for the eCores while the main number
+of iterations is the number of time the host will invoke the eCores.
 
 Expected output :
 
@@ -32,7 +36,7 @@ With stat option (gcc with `-D STAT`) :
 
 #### Stats
 
-A bash script is provided and aims to outputs performance stats as csv files. Be sure first to enable csv output in the main script (with `-D STAT`).
+A bash script is provided and aims to outputs performance stats as csv files. Be sure first to enable csv output in the build script (with `-D STAT`).
 
 The first script (stats.sh) takes no parameter and produces data in rows :
 

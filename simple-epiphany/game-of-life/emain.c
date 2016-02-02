@@ -1,3 +1,12 @@
+/*
+ * Author: Noémien Kocher
+ * Date: january 2016
+ * Licence: MIT
+ * Purpose:
+ *   This file is run by each eCore, it represents the life of a cell. Until it
+ *   is stopped, loops over and check its neighbor so as to update its status.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
