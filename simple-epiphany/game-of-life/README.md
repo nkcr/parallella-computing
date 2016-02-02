@@ -37,3 +37,7 @@ X	X	X	X	X	X
 
 At the end, prints for each cells the number of iterations and the status of the
 sticky overflow flag.
+
+#### License
+
+MIT

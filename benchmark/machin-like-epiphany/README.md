@@ -64,3 +64,7 @@ Tips to run on different screen, type `screen` to start a new session. Then
 leave it with `CTRL-A CTRL-D`, come back with `screen -r`.
 That step is useful to launch stats from ssh without ending it on leaving ssh
 session.
+
+#### License
+
+MIT
