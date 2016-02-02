@@ -4,6 +4,7 @@
  * Licence: MIT
  * Purpose:
  *   Computes an approximation of PI using machin-like formula.
+ *
  */
 
 #include <stdio.h>
