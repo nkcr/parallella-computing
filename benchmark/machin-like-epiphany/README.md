@@ -50,6 +50,14 @@ The second script (stats_chunck.sh) produces data in a progressiv way along rows
 
 And will produce a file output `stats_chunck_31_50.csv`.
 
+#### Speedup
+
+```
+./speedup.sh
+```
+
+Will run the program with different number of cores and output a csv file.
+
 #### Tips
 
 Tips to run on different screen, type `screen` to start a new session. Then
